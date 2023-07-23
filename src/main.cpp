@@ -311,6 +311,11 @@ int main(int argc, char* argv[])
     ComputeNormals(&planemodel);
     BuildTrianglesAndAddToVirtualScene(&planemodel);
 
+    ObjModel boxmodel("../../data/box/box.obj");
+    ComputeNormals(&boxmodel);
+    BuildTrianglesAndAddToVirtualScene(&boxmodel);
+
+
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
@@ -379,7 +384,7 @@ int main(int argc, char* argv[])
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -10.0f; // Posição do "far plane"
+        float farplane  = -50.0f; // Posição do "far plane"
 
         /* Att posicao de camera */
         glm::vec4 w = -camera_view_vector/norm(camera_view_vector);
@@ -452,7 +457,7 @@ int main(int argc, char* argv[])
         #define SPHERE 0
         #define BUNNY  1
         #define PLANE  2
-
+        #define BOX    3
         // Desenhamos o modelo da esfera
         model = Matrix_Translate(-1.0f,0.0f,0.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -470,10 +475,16 @@ int main(int argc, char* argv[])
 
         // Desenhamos o modelo do chao
         model = Matrix_Translate(0.0f,-1.0f,0.0f)
-              * Matrix_Scale(2.0f, 2.0f, 2.0f) ;
+              * Matrix_Scale(50.0f, 2.0f, 50.0f) ;
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("the_plane");
+
+        //Desenhamos o modelo da caixa
+        model = Matrix_Translate(3.50f,-0.28f,0.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, BOX);
+        DrawVirtualObject("box.jpg");
 
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
