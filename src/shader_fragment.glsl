@@ -83,9 +83,9 @@ void main()
         q = 20.0;
     }
     else if (object_id == BOX){
-        Ka= vec3(0.000000,0.000000,0.000000);
         Kd= vec3(0.698039, 0.698039, 0.698039);
-        Ks= vec3(0.300000, 0.300000, 0.300000);
+        Ks= vec3(0.0,0.0,0.0);
+        Ka= Kd/2;
         q = 2.0;
     }
     else // Objeto desconhecido = preto

@@ -225,6 +225,8 @@ bool movingRight    = false;
 bool movingUp       = false;
 bool movingDown     = false;
 
+glm::vec3 calculateBezierPoint(const std::vector<glm::vec3>& controlPoints, float t);
+
 int main(int argc, char* argv[])
 {
     // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
@@ -335,6 +337,9 @@ int main(int argc, char* argv[])
 
     float speed = 5.0f; // Velocidade da câmera
     float prev_time = (float)glfwGetTime();
+
+    float t_bezier = 0.0f;
+    bool reverseDirection = false;
 
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -485,6 +490,53 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BOX);
         DrawVirtualObject("box.jpg");
+
+        /* Exemplo aplicacao curva de bezier*/
+        if (reverseDirection){
+            t_bezier -= 0.0001f;
+        } else {
+            t_bezier += 0.0001f;
+        }
+
+        if(t_bezier >= 1.0f || t_bezier <= 0.0f){
+            reverseDirection = !reverseDirection;
+        }
+
+        // Pontos da curva:
+        glm::vec3 ponto1 = glm::vec3(0.0, 0.0f, 0.0f);
+        glm::vec3 ponto2 = glm::vec3(1.0, 5.0f, 0.0f);
+        glm::vec3 ponto3 = glm::vec3(2.0, 5.0f, 0.0f);
+        glm::vec3 ponto4 = glm::vec3(3.0, 0.0f, 0.0f);
+        glm::vec3 aaa = calculateBezierPoint({ponto1, ponto2, ponto3, ponto4}, t_bezier);
+
+        /*
+        glm::vec3 a = ponto1 + t_bezier*(ponto2 - ponto1);
+        glm::vec3 b = ponto2 + t_bezier*(ponto3 - ponto2);
+        glm::vec3 c = ponto3 + t_bezier*(ponto4 - ponto3);
+
+        glm::vec3 aa = a + t_bezier*(b - a);
+        glm::vec3 bb = b + t_bezier*(c - b);
+
+        glm::vec3 aaa = aa + t_bezier*(bb - aa);
+        *;
+
+        /* tronco */
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(aaa.x, aaa.y, aaa.z)  //(0,2.0f,-4.0f)
+                      * Matrix_Rotate_Z(1.57);
+        PushMatrix(model);
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, BOX);
+            DrawVirtualObject("box.jpg");
+        PopMatrix(model);
+        /* Cabeca */
+        PushMatrix(model);
+            model = model * Matrix_Translate(2.0f, 0.0f, 0.0f);
+            model = model * Matrix_Scale(0.5f, 0.5f, 0.5f);
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, SPHERE);
+            DrawVirtualObject("the_sphere");
+        PopMatrix(model);
 
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
@@ -1551,6 +1603,20 @@ void PrintObjModelInfo(ObjModel* model)
     }
     printf("\n");
   }
+}
+
+glm::vec3 calculateBezierPoint(const std::vector<glm::vec3>& controlPoints, float t){
+    int n = controlPoints.size() - 1;
+    std::vector<glm::vec3> tempPoints = controlPoints;
+
+    while (n > 0){
+        for (int i = 0; i < n; i++){
+            tempPoints[i] = tempPoints[i] + t*(tempPoints[i + 1] - tempPoints[i]);
+        }
+        n--;
+    }
+
+    return tempPoints[0];
 }
 
 // set makeprg=cd\ ..\ &&\ make\ run\ >/dev/null
