@@ -42,68 +42,19 @@
 // Headers da biblioteca para carregar modelos obj
 #include <tiny_obj_loader.h>
 
+
+#include "types.h"
+#include "mouse_picking.h"
+
+
 // Headers locais, definidos na pasta "include/"
 #include "utils.h"
 #include "matrices.h"
 
+#include <string>
+
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
-struct ObjModel
-{
-    tinyobj::attrib_t                 attrib;
-    std::vector<tinyobj::shape_t>     shapes;
-    std::vector<tinyobj::material_t>  materials;
-
-    // Este construtor lê o modelo de um arquivo utilizando a biblioteca tinyobjloader.
-    // Veja: https://github.com/syoyo/tinyobjloader
-    ObjModel(const char* filename, const char* basepath = NULL, bool triangulate = true)
-    {
-        printf("Carregando objetos do arquivo \"%s\"...\n", filename);
-
-        // Se basepath == NULL, então setamos basepath como o dirname do
-        // filename, para que os arquivos MTL sejam corretamente carregados caso
-        // estejam no mesmo diretório dos arquivos OBJ.
-        std::string fullpath(filename);
-        std::string dirname;
-        if (basepath == NULL)
-        {
-            auto i = fullpath.find_last_of("/");
-            if (i != std::string::npos)
-            {
-                dirname = fullpath.substr(0, i+1);
-                basepath = dirname.c_str();
-            }
-        }
-
-        std::string warn;
-        std::string err;
-        bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filename, basepath, triangulate);
-
-        if (!err.empty())
-            fprintf(stderr, "\n%s\n", err.c_str());
-
-        if (!ret)
-            throw std::runtime_error("Erro ao carregar modelo.");
-
-        for (size_t shape = 0; shape < shapes.size(); ++shape)
-        {
-            if (shapes[shape].name.empty())
-            {
-                fprintf(stderr,
-                        "*********************************************\n"
-                        "Erro: Objeto sem nome dentro do arquivo '%s'.\n"
-                        "Veja https://www.inf.ufrgs.br/~eslgastal/fcg-faq-etc.html#Modelos-3D-no-formato-OBJ .\n"
-                        "*********************************************\n",
-                    filename);
-                throw std::runtime_error("Objeto sem nome.");
-            }
-            printf("- Objeto '%s'\n", shapes[shape].name.c_str());
-        }
-
-        printf("OK.\n");
-    }
-};
-
 
 // Declaração de funções utilizadas para pilha de matrizes de modelagem.
 void PushMatrix(glm::mat4 M);
@@ -149,16 +100,6 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
-// Definimos uma estrutura que armazenará dados necessários para renderizar
-// cada objeto da cena virtual.
-struct SceneObject
-{
-    std::string  name;        // Nome do objeto
-    size_t       first_index; // Índice do primeiro vértice dentro do vetor indices[] definido em BuildTrianglesAndAddToVirtualScene()
-    size_t       num_indices; // Número de índices do objeto dentro do vetor indices[] definido em BuildTrianglesAndAddToVirtualScene()
-    GLenum       rendering_mode; // Modo de rasterização (GL_TRIANGLES, GL_TRIANGLE_STRIP, etc.)
-    GLuint       vertex_array_object_id; // ID do VAO onde estão armazenados os atributos do modelo
-};
 
 // Abaixo definimos variáveis globais utilizadas em várias funções do código.
 
@@ -315,6 +256,12 @@ int main(int argc, char* argv[])
     ComputeNormals(&boxmodel);
     BuildTrianglesAndAddToVirtualScene(&boxmodel);
 
+    std::vector<float> objVertices = boxmodel.attrib.vertices;
+
+    /*int j = 0;
+    for (float i: objVertices)
+        if(j++ % 3 == 0) std::cout << i << ' ';*/
+
 
     if ( argc > 1 )
     {
@@ -422,7 +369,6 @@ int main(int argc, char* argv[])
             cameraY += -(u.y + 1) * delta_t * speed;
         }
 
-        //printf("%f %f %f\n", cameraX, cameraY, cameraZ);
 
 
         if (g_UsePerspectiveProjection)
@@ -446,7 +392,7 @@ int main(int argc, char* argv[])
             projection = Matrix_Orthographic(l, r, b, t, nearplane, farplane);
         }
 
-        glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
+
 
         // Enviamos as matrizes "view" e "projection" para a placa de vídeo
         // (GPU). Veja o arquivo "shader_vertex.glsl", onde estas são
@@ -458,33 +404,68 @@ int main(int argc, char* argv[])
         #define BUNNY  1
         #define PLANE  2
         #define BOX    3
-        // Desenhamos o modelo da esfera
-        model = Matrix_Translate(-1.0f,0.0f,0.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
-        DrawVirtualObject("the_sphere");
 
-        // Desenhamos o modelo do coelho
-        model = Matrix_Translate(1.0f,0.0f,0.0f)
-              * Matrix_Rotate_Z(g_AngleZ)
-              * Matrix_Rotate_Y(g_AngleY)
-              * Matrix_Rotate_X(g_AngleX);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, BUNNY);
-        DrawVirtualObject("the_bunny");
+        std::vector<std::string> objNames = {"the_sphere","the_bunny","the_plane","box.jpg"};
+        //glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
 
-        // Desenhamos o modelo do chao
-        model = Matrix_Translate(0.0f,-1.0f,0.0f)
-              * Matrix_Scale(50.0f, 2.0f, 50.0f) ;
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, PLANE);
-        DrawVirtualObject("the_plane");
 
-        //Desenhamos o modelo da caixa
-        model = Matrix_Translate(3.50f,-0.28f,0.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, BOX);
-        DrawVirtualObject("box.jpg");
+        for(int i = 0; i < objNames.size() ; i++){
+            char* objName = &*objNames[i].begin();
+            glm::mat4 model = g_VirtualScene[objName].model;
+            switch(i){
+                case 0:
+                    // Desenhamos o modelo da esfera
+                    model = Matrix_Translate(-1.0f,0.0f,0.0f);
+                    break;
+                case 1:
+                    // Coelho
+                    model = Matrix_Translate(1.0f,0.0f,0.0f)
+                      * Matrix_Rotate_Z(g_AngleZ)
+                      * Matrix_Rotate_Y(g_AngleY)
+                      * Matrix_Rotate_X(g_AngleX);
+                      break;
+                case 2:
+                    //Chão
+                    model = Matrix_Translate(0.0f,-1.0f,0.0f)
+                    * Matrix_Scale(50.0f, 2.0f, 50.0f) ;
+                    break;
+                case 3:
+                    //Desenhamos o modelo da caixa
+                    model = Matrix_Translate(3.50f,-0.28f,0.0f);
+                    break;
+                default:
+                    break;
+            }
+
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, i);
+            DrawVirtualObject(objName);
+            SceneObject obj = g_VirtualScene[objName];
+            float distance;
+            if(TestRayOBBIntersection(glm::vec3(camera_position_c),glm::vec3(camera_view_vector),obj.bbox_min,obj.bbox_max,model,distance)){
+                printf("LOOKING AT: %s\n",objName);
+            }
+
+        }
+
+        //SceneObject interactable_object = GetInteractableObject(g_VirtualScene,camera_position_c,camera_view_vector);
+
+       // printf("%s",interactable_object.name);
+        /*if()
+            printf("LOOKING AT: %s",interactable_object.name);
+            */
+
+
+
+
+
+
+
+
+
+
+
 
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
@@ -519,6 +500,8 @@ int main(int argc, char* argv[])
     // Fim do programa
     return 0;
 }
+
+
 
 // Função que desenha um objeto armazenado em g_VirtualScene. Veja definição
 // dos objetos na função BuildTrianglesAndAddToVirtualScene().
@@ -587,6 +570,8 @@ void LoadShadersFromFiles()
     g_projection_uniform = glGetUniformLocation(g_GpuProgramID, "projection"); // Variável da matriz "projection" em shader_vertex.glsl
     g_object_id_uniform  = glGetUniformLocation(g_GpuProgramID, "object_id"); // Variável "object_id" em shader_fragment.glsl
 }
+
+
 
 // Função que pega a matriz M e guarda a mesma no topo da pilha
 void PushMatrix(glm::mat4 M)
@@ -690,6 +675,12 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
         size_t first_index = indices.size();
         size_t num_triangles = model->shapes[shape].mesh.num_face_vertices.size();
 
+        const float minval = std::numeric_limits<float>::min();
+        const float maxval = std::numeric_limits<float>::max();
+
+        glm::vec3 bbox_min = glm::vec3(maxval,maxval,maxval);
+        glm::vec3 bbox_max = glm::vec3(minval,minval,minval);
+
         for (size_t triangle = 0; triangle < num_triangles; ++triangle)
         {
             assert(model->shapes[shape].mesh.num_face_vertices[triangle] == 3);
@@ -709,10 +700,19 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
                 model_coefficients.push_back( vz ); // Z
                 model_coefficients.push_back( 1.0f ); // W
 
+                bbox_min.x = std::min(bbox_min.x, vx);
+                bbox_min.y = std::min(bbox_min.y, vy);
+                bbox_min.z = std::min(bbox_min.z, vz);
+                bbox_max.x = std::max(bbox_max.x, vx);
+                bbox_max.y = std::max(bbox_max.y, vy);
+                bbox_max.z = std::max(bbox_max.z, vz);
+
                 // Inspecionando o código da tinyobjloader, o aluno Bernardo
                 // Sulzbach (2017/1) apontou que a maneira correta de testar se
                 // existem normais e coordenadas de textura no ObjModel é
                 // comparando se o índice retornado é -1. Fazemos isso abaixo.
+
+
 
                 if ( idx.normal_index != -1 )
                 {
@@ -743,6 +743,9 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
         theobject.num_indices    = last_index - first_index + 1; // Número de indices
         theobject.rendering_mode = GL_TRIANGLES;       // Índices correspondem ao tipo de rasterização GL_TRIANGLES.
         theobject.vertex_array_object_id = vertex_array_object_id;
+
+        theobject.bbox_min = bbox_min;
+        theobject.bbox_max = bbox_max;
 
         g_VirtualScene[model->shapes[shape].name] = theobject;
     }
