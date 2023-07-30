@@ -29,6 +29,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
+#include <iostream>
 
 // Headers das bibliotecas OpenGL
 #include <glad/glad.h>   // Criação de contexto OpenGL 3.3
@@ -51,8 +52,10 @@
 #include "utils.h"
 #include "matrices.h"
 
-#include <string>
 
+
+
+#include "glm/gtx/string_cast.hpp"
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 
@@ -101,6 +104,7 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
 
+void calculateBbox(std::vector<float>& vertices,SceneObject& obj);
 // Abaixo definimos variáveis globais utilizadas em várias funções do código.
 
 // A cena virtual é uma lista de objetos nomeados, guardados em um dicionário
@@ -108,6 +112,8 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 // objetos dentro da variável g_VirtualScene, e veja na função main() como
 // estes são acessados.
 std::map<std::string, SceneObject> g_VirtualScene;
+
+std::map<std::string, ObjModel> SceneModels;
 
 // Pilha que guardará as matrizes de modelagem.
 std::stack<glm::mat4>  g_MatrixStack;
@@ -155,6 +161,9 @@ GLint g_view_uniform;
 GLint g_projection_uniform;
 GLint g_object_id_uniform;
 
+
+SceneObject* interactable_object;
+bool isInspecting = false;
 // Variaveis da free cam
 float cameraX = 0.0f;
 float cameraY = 0.0f;
@@ -240,21 +249,34 @@ int main(int argc, char* argv[])
     LoadShadersFromFiles();
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
+
     ObjModel spheremodel("../../data/sphere.obj");
+    SceneModels.insert({"the_sphere", spheremodel});
     ComputeNormals(&spheremodel);
     BuildTrianglesAndAddToVirtualScene(&spheremodel);
 
     ObjModel bunnymodel("../../data/bunny.obj");
+    SceneModels.insert({"the_bunny", bunnymodel});
     ComputeNormals(&bunnymodel);
     BuildTrianglesAndAddToVirtualScene(&bunnymodel);
 
     ObjModel planemodel("../../data/plane.obj");
+    SceneModels.insert({"the_plane", planemodel});
     ComputeNormals(&planemodel);
     BuildTrianglesAndAddToVirtualScene(&planemodel);
 
     ObjModel boxmodel("../../data/box/box.obj");
+    SceneModels.insert({"box.jpg", boxmodel});
     ComputeNormals(&boxmodel);
     BuildTrianglesAndAddToVirtualScene(&boxmodel);
+
+    std::vector<std::string> objNames = {"the_sphere","the_bunny","the_plane","box.jpg"};
+
+    for(auto & name : objNames){
+        g_VirtualScene[name].name = name;
+    }
+
+
 
     std::vector<float> objVertices = boxmodel.attrib.vertices;
 
@@ -316,10 +338,24 @@ int main(int argc, char* argv[])
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
         glm::vec4 camera_position_c  = glm::vec4(cameraX,cameraY,cameraZ,1.0f); // Ponto "c", centro da câmera
-        glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
-        //glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
-        glm::vec4 camera_view_vector = glm::vec4(-x, -y, -z, 0.0f);
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+        //glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
+        glm::vec4 camera_view_vector;
+
+        if(isInspecting && interactable_object != NULL){
+            glm::vec4 bbox_center = glm::vec4(abs(interactable_object->bbox_max.x) - abs(interactable_object->bbox_min.x),
+                                     abs(interactable_object->bbox_max.y) - abs(interactable_object->bbox_min.y),
+                                     abs(interactable_object->bbox_max.z) - abs(interactable_object->bbox_min.z),
+                                     1.0f
+                                     );
+            // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+            camera_view_vector = bbox_center - camera_position_c;
+        }else
+            camera_view_vector = glm::vec4(-x, -y, -z, 0.0f);
+
+
+
+
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -405,66 +441,52 @@ int main(int argc, char* argv[])
         #define PLANE  2
         #define BOX    3
 
-        std::vector<std::string> objNames = {"the_sphere","the_bunny","the_plane","box.jpg"};
+
         //glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
 
 
         for(int i = 0; i < objNames.size() ; i++){
             char* objName = &*objNames[i].begin();
-            glm::mat4 model = g_VirtualScene[objName].model;
+            //SceneObject *obj = &g_VirtualScene[objName];
+            glm::mat4* model = &g_VirtualScene[objName].model;
+
             switch(i){
                 case 0:
                     // Desenhamos o modelo da esfera
-                    model = Matrix_Translate(-1.0f,0.0f,0.0f);
+                    *model = Matrix_Translate(-1.0f,0.0f,0.0f);
                     break;
                 case 1:
                     // Coelho
-                    model = Matrix_Translate(1.0f,0.0f,0.0f)
+                    *model = Matrix_Translate(1.0f,0.0f,0.0f)
                       * Matrix_Rotate_Z(g_AngleZ)
                       * Matrix_Rotate_Y(g_AngleY)
                       * Matrix_Rotate_X(g_AngleX);
                       break;
                 case 2:
                     //Chão
-                    model = Matrix_Translate(0.0f,-1.0f,0.0f)
-                    * Matrix_Scale(50.0f, 2.0f, 50.0f) ;
+                    *model = Matrix_Translate(0.0f,-1.0f,0.0f)
+                        * Matrix_Scale(50.0f, 2.0f, 50.0f) ;
                     break;
                 case 3:
                     //Desenhamos o modelo da caixa
-                    model = Matrix_Translate(3.50f,-0.28f,0.0f);
-                    break;
+                    *model = Matrix_Translate(3.50f,-0.28f,0.0f);
                 default:
                     break;
             }
 
 
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(*model));
             glUniform1i(g_object_id_uniform, i);
             DrawVirtualObject(objName);
-            SceneObject obj = g_VirtualScene[objName];
-            float distance;
-            if(TestRayOBBIntersection(glm::vec3(camera_position_c),glm::vec3(camera_view_vector),obj.bbox_min,obj.bbox_max,model,distance)){
+
+            /*float distance;
+        if(TestRayOBBIntersection(glm::vec3(camera_position_c),glm::vec3(camera_view_vector),obj.bbox_min,obj.bbox_max,obj.model,distance)){
                 printf("LOOKING AT: %s\n",objName);
-            }
+            }*/
 
         }
 
-        //SceneObject interactable_object = GetInteractableObject(g_VirtualScene,camera_position_c,camera_view_vector);
-
-       // printf("%s",interactable_object.name);
-        /*if()
-            printf("LOOKING AT: %s",interactable_object.name);
-            */
-
-
-
-
-
-
-
-
-
-
+        interactable_object = GetInteractableObject(g_VirtualScene,camera_position_c,camera_view_vector);
 
 
 
@@ -656,6 +678,37 @@ void ComputeNormals(ObjModel* model)
         model->attrib.normals[3*i + 1] = n.y;
         model->attrib.normals[3*i + 2] = n.z;
     }
+}
+
+void calculateBbox(std::vector<float>& vertices, SceneObject& obj){
+    glm::vec3 bboxMin;
+    glm::vec3 bboxMax;
+    bboxMin.x = bboxMax.x = vertices[0];
+    bboxMin.y = bboxMax.y = vertices[1];
+    bboxMin.z = bboxMax.z = vertices[2];
+
+    std::vector<float>::iterator it;
+    for (it = vertices.begin()+3; it < vertices.end(); it+=3){
+        if(*it > bboxMax.x)
+            bboxMax.x = *it;
+        if(*it < bboxMin.x)
+            bboxMin.x = *it;
+    }
+    for (it = vertices.begin()+4; it < vertices.end(); it+=3){
+        if(*it > bboxMax.y)
+            bboxMax.y = *it;
+        if(*it < bboxMin.x)
+            bboxMin.y = *it;
+    }
+    for (it = vertices.begin()+5; it < vertices.end(); it+=3){
+        if(*it > bboxMax.z)
+            bboxMax.y = *it;
+        if(*it < bboxMin.z)
+            bboxMin.y = *it;
+    }
+
+    obj.bbox_max = bboxMax;
+    obj.bbox_min = bboxMin;
 }
 
 // Constrói triângulos para futura renderização a partir de um ObjModel.
@@ -1132,7 +1185,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 
     // Se o usuário pressionar a tecla ESC, fechamos a janela.
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GL_TRUE);
+        isInspecting = false;
 
     // O código abaixo implementa a seguinte lógica:
     //   Se apertar tecla X       então g_AngleX += delta;
@@ -1196,6 +1249,18 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         fflush(stdout);
     }
 
+    if(key == GLFW_KEY_E && action == GLFW_PRESS){
+        std::cout << "ENTROU" << std::endl;
+        if(interactable_object != NULL && !isInspecting){
+            std::cout << "INTERAGIU COM: " << interactable_object->name << std::endl;
+            std::cout << "BBOX ANTES: MIN - " << glm::to_string(interactable_object->bbox_min) << " | MAX - " <<  glm::to_string(interactable_object->bbox_max) << std::endl;
+            calculateBbox(SceneModels.at(interactable_object->name).attrib.vertices, *interactable_object);
+            std::cout << "BBOX DEPOIS: MIN - " << glm::to_string(interactable_object->bbox_min) << " | MAX - " <<  glm::to_string(interactable_object->bbox_max) << std::endl << std::endl;
+            //isInspecting = true;
+        }
+        std::cout << "SAIU" << std::endl;
+    }
+
     /* coordenadas da camera: x, y, z*/
     /* W -> move para frente */
     if(key == GLFW_KEY_W){
@@ -1250,6 +1315,8 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             movingDown = false;
         }
     }
+
+
 
 }
 
