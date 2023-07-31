@@ -69,6 +69,7 @@ struct SceneObject
     glm::vec4    bbox_max;
     glm::mat4    model;
     int          obj_index;
+    bool         inspectable;
 
     glm::vec4 get_bbox_min(){
         return model * bbox_min;

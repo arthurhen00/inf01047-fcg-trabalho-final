@@ -111,8 +111,6 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 // estes são acessados.
 std::map<std::string, SceneObject> g_VirtualScene;
 
-std::map<std::string, ObjModel> SceneModels;
-
 // Pilha que guardará as matrizes de modelagem.
 std::stack<glm::mat4>  g_MatrixStack;
 
@@ -251,33 +249,29 @@ int main(int argc, char* argv[])
     // Construímos a representação de objetos geométricos através de malhas de triângulos
 
     ObjModel spheremodel("../../data/sphere.obj");
-    SceneModels.insert({"the_sphere", spheremodel});
     ComputeNormals(&spheremodel);
     BuildTrianglesAndAddToVirtualScene(&spheremodel);
+    g_VirtualScene.at("the_sphere").inspectable = true;
 
     ObjModel bunnymodel("../../data/bunny.obj");
-    SceneModels.insert({"the_bunny", bunnymodel});
     ComputeNormals(&bunnymodel);
     BuildTrianglesAndAddToVirtualScene(&bunnymodel);
+    g_VirtualScene.at("the_bunny").inspectable = true;
 
     ObjModel planemodel("../../data/plane.obj");
-    SceneModels.insert({"the_plane", planemodel});
     ComputeNormals(&planemodel);
     BuildTrianglesAndAddToVirtualScene(&planemodel);
+    g_VirtualScene.at("the_plane").inspectable = true;
 
     ObjModel boxmodel("../../data/box/box.obj");
-    SceneModels.insert({"box.jpg", boxmodel});
     ComputeNormals(&boxmodel);
     BuildTrianglesAndAddToVirtualScene(&boxmodel);
+    g_VirtualScene.at("box.jpg").inspectable = true;
 
-    std::vector<std::string> objNames = {"the_sphere","the_bunny","the_plane","box.jpg"};
-
-
-    std::vector<float> objVertices = boxmodel.attrib.vertices;
-
-    /*int j = 0;
-    for (float i: objVertices)
-        if(j++ % 3 == 0) std::cout << i << ' ';*/
+    ObjModel skyboxmodel("../../data/skybox.obj");
+    ComputeNormals(&skyboxmodel);
+    BuildTrianglesAndAddToVirtualScene(&skyboxmodel);
+    g_VirtualScene.at("skybox").inspectable = false;
 
 
     if ( argc > 1 )
@@ -436,16 +430,14 @@ int main(int argc, char* argv[])
         #define BUNNY  1
         #define PLANE  2
         #define BOX    3
-
-
-
+        #define SKYBOX 4
 
         if(!is_inspecting){
             // Desenhamos o modelo da esfera
             model = Matrix_Translate(-1.0f,0.0f,0.0f);
             g_VirtualScene.at("the_sphere").model = model;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, 0);
+            glUniform1i(g_object_id_uniform, SPHERE);
             DrawVirtualObject("the_sphere");
 
             // Coelho
@@ -455,14 +447,14 @@ int main(int argc, char* argv[])
               * Matrix_Rotate_X(g_AngleX);
             g_VirtualScene.at("the_bunny").model = model;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, 1);
+            glUniform1i(g_object_id_uniform, BUNNY);
             DrawVirtualObject("the_bunny");
 
             //Desenhamos o modelo da caixa
             model = Matrix_Translate(3.50f,-0.28f,0.0f);
             g_VirtualScene.at("box.jpg").model = model;g_VirtualScene.at("box.jpg").model = model;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, 3);
+            glUniform1i(g_object_id_uniform, BOX);
             DrawVirtualObject("box.jpg");
 
         }
@@ -473,15 +465,29 @@ int main(int argc, char* argv[])
 
         g_VirtualScene.at("the_plane").model = model;
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, 2);
+        glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("the_plane");
 
 
 
         if(is_inspecting && interactable_object != NULL){
+            model = Matrix_Translate(cameraX,cameraY,cameraZ);
+
+            glDisable(GL_DEPTH_TEST);
+            glDisable(GL_CULL_FACE);
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, SKYBOX);
+            DrawVirtualObject("skybox");
+
+            glEnable(GL_DEPTH_TEST);
+            glEnable(GL_CULL_FACE);
+
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(interactable_object->model));
             glUniform1i(g_object_id_uniform, interactable_object->obj_index);
             DrawVirtualObject(interactable_object->name.c_str());
+
+
         }
 
         if(!is_inspecting){

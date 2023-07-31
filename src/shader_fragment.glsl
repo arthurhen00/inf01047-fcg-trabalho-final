@@ -17,6 +17,7 @@ uniform mat4 projection;
 #define BUNNY  1
 #define PLANE  2
 #define BOX    3
+#define SKYBOX 4
 uniform int object_id;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
@@ -87,8 +88,12 @@ void main()
         Kd= vec3(0.698039, 0.698039, 0.698039);
         Ks= vec3(0.300000, 0.300000, 0.300000);
         q = 2.0;
-    }
-    else // Objeto desconhecido = preto
+    }else if (object_id == SKYBOX){
+        Kd = vec3(0.0,0.0,0.0);
+        Ks = vec3(0.0,0.0,0.0);
+        Ka = vec3(0.0,0.0,0.0);
+        q = 32.0;
+    }else // Objeto desconhecido = preto
     {
         Kd = vec3(0.0,0.0,0.0);
         Ks = vec3(0.0,0.0,0.0);

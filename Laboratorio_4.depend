@@ -1876,7 +1876,7 @@
 	<inttypes.h>
 	<stdint.h>
 
-1690834513 source:c:\users\gabip\projetos\inf01047-fcg-trabalho-final\src\main.cpp
+1690835536 source:c:\users\gabip\projetos\inf01047-fcg-trabalho-final\src\main.cpp
 	<cmath>
 	<cstdio>
 	<cstdlib>
@@ -2788,7 +2788,7 @@
 1690319354 source:c:\users\gabip\projetos\inf01047-fcg-trabalho-final\src\mouse_picking.cpp
 	"mouse_picking.h"
 
-1690834663 c:\users\gabip\projetos\inf01047-fcg-trabalho-final\include\types.h
+1690834743 c:\users\gabip\projetos\inf01047-fcg-trabalho-final\include\types.h
 
 1690819795 source:c:\users\aluno\desktop\inf01047-fcg-trabalho-final-inspecao-de-objetos\src\tiny_obj_loader.cpp
 	"tiny_obj_loader.h"
