@@ -65,7 +65,24 @@ struct SceneObject
     size_t       num_indices; // Número de índices do objeto dentro do vetor indices[] definido em BuildTrianglesAndAddToVirtualScene()
     GLenum       rendering_mode; // Modo de rasterização (GL_TRIANGLES, GL_TRIANGLE_STRIP, etc.)
     GLuint       vertex_array_object_id; // ID do VAO onde estão armazenados os atributos do modelo
-    glm::vec3    bbox_min; // Axis-Aligned Bounding Box do objeto
-    glm::vec3    bbox_max;
+    glm::vec4    bbox_min; // Axis-Aligned Bounding Box do objeto
+    glm::vec4    bbox_max;
     glm::mat4    model;
+    int          obj_index;
+
+    glm::vec4 get_bbox_min(){
+        return model * bbox_min;
+    }
+
+    glm::vec4 get_bbox_max(){
+        return model * bbox_max;
+    }
+
+    glm::vec4 get_bbox_center(){
+        return model * glm::vec4(   (bbox_max.x + bbox_min.x)/2,
+                                    (bbox_max.y + bbox_min.y)/2,
+                                    (bbox_max.z + bbox_min.z)/2,
+                                     1.0f
+                                     ) ;
+    }
 };
