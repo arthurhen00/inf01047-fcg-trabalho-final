@@ -334,11 +334,11 @@ int main(int argc, char* argv[])
         glm::vec4 camera_view_vector;
 
         if(is_inspecting && interactable_object != NULL){
-
-
+            glm::vec4 bbox_center = interactable_object->get_bbox_center();
+            glm::vec4 vec = glm::normalize(glm::vec4(0.0f,0.0f,1.0f,0.0f)) * g_CameraDistance;
+            camera_position_c  = bbox_center + vec;
             // Ponto "l", para onde a câmera (look-at) estará sempre olhando
-            camera_view_vector = interactable_object->get_bbox_center() - camera_position_c;
-
+            camera_view_vector = bbox_center - camera_position_c;
 
         }else
             camera_view_vector = -glm::vec4(x, y, z, 0.0f);
@@ -441,10 +441,7 @@ int main(int argc, char* argv[])
             DrawVirtualObject("the_sphere");
 
             // Coelho
-            model = Matrix_Translate(1.0f,0.0f,0.0f)
-              * Matrix_Rotate_Z(g_AngleZ)
-              * Matrix_Rotate_Y(g_AngleY)
-              * Matrix_Rotate_X(g_AngleX);
+            model = Matrix_Translate(1.0f,0.0f,0.0f);
             g_VirtualScene.at("the_bunny").model = model;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, BUNNY);
@@ -471,7 +468,7 @@ int main(int argc, char* argv[])
 
 
         if(is_inspecting && interactable_object != NULL){
-            model = Matrix_Translate(cameraX,cameraY,cameraZ);
+            model = Matrix_Translate(camera_position_c.x,camera_position_c.y,camera_position_c.z);
 
             glDisable(GL_DEPTH_TEST);
             glDisable(GL_CULL_FACE);
@@ -479,13 +476,17 @@ int main(int argc, char* argv[])
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, SKYBOX);
             DrawVirtualObject("skybox");
-
-            glEnable(GL_DEPTH_TEST);
             glEnable(GL_CULL_FACE);
 
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(interactable_object->model));
+            model = interactable_object->model
+                  * Matrix_Rotate_Z(g_AngleZ)
+                  * Matrix_Rotate_Y(g_AngleY)
+                  * Matrix_Rotate_X(g_AngleX);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, interactable_object->obj_index);
             DrawVirtualObject(interactable_object->name.c_str());
+
+            glEnable(GL_DEPTH_TEST);
 
 
         }
@@ -1070,57 +1071,32 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
     // parâmetros que definem a posição da câmera dentro da cena virtual.
     // Assim, temos que o usuário consegue controlar a câmera.
 
-    if (g_LeftMouseButtonPressed && !is_inspecting)
+    if (g_LeftMouseButtonPressed)
     {
         // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
         float dx = xpos - g_LastCursorPosX;
         float dy = ypos - g_LastCursorPosY;
 
-        // Atualizamos parâmetros da câmera com os deslocamentos
-        g_CameraTheta -= 0.01f*dx;
-        g_CameraPhi   += 0.01f*dy;
 
-        // Em coordenadas esféricas, o ângulo phi deve ficar entre -pi/2 e +pi/2.
-        float phimax = 3.141592f/2;
-        float phimin = -phimax;
+        if(is_inspecting){
+            g_AngleX += 0.002*dx;
+            g_AngleY += 0.002*dy;
+        }else{
+            // Atualizamos parâmetros da câmera com os deslocamentos
+            g_CameraTheta -= 0.01f*dx;
+            g_CameraPhi   += 0.01f*dy;
 
-        if (g_CameraPhi > phimax)
-            g_CameraPhi = phimax;
+            // Em coordenadas esféricas, o ângulo phi deve ficar entre -pi/2 e +pi/2.
+            float phimax = 3.141592f/2;
+            float phimin = -phimax;
 
-        if (g_CameraPhi < phimin)
-            g_CameraPhi = phimin;
+            if (g_CameraPhi > phimax)
+                g_CameraPhi = phimax;
 
-        // Atualizamos as variáveis globais para armazenar a posição atual do
-        // cursor como sendo a última posição conhecida do cursor.
-        g_LastCursorPosX = xpos;
-        g_LastCursorPosY = ypos;
-    }
+            if (g_CameraPhi < phimin)
+                g_CameraPhi = phimin;
 
-    if (g_RightMouseButtonPressed)
-    {
-        // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
-        float dx = xpos - g_LastCursorPosX;
-        float dy = ypos - g_LastCursorPosY;
-
-        // Atualizamos parâmetros da antebraço com os deslocamentos
-        g_ForearmAngleZ -= 0.01f*dx;
-        g_ForearmAngleX += 0.01f*dy;
-
-        // Atualizamos as variáveis globais para armazenar a posição atual do
-        // cursor como sendo a última posição conhecida do cursor.
-        g_LastCursorPosX = xpos;
-        g_LastCursorPosY = ypos;
-    }
-
-    if (g_MiddleMouseButtonPressed)
-    {
-        // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
-        float dx = xpos - g_LastCursorPosX;
-        float dy = ypos - g_LastCursorPosY;
-
-        // Atualizamos parâmetros da antebraço com os deslocamentos
-        g_TorsoPositionX += 0.01f*dx;
-        g_TorsoPositionY -= 0.01f*dy;
+        }
 
         // Atualizamos as variáveis globais para armazenar a posição atual do
         // cursor como sendo a última posição conhecida do cursor.
@@ -1158,7 +1134,6 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             std::exit(100 + i);
     // ==================
 
-    // Se o usuário pressionar a tecla ESC, fechamos a janela.
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         is_inspecting = false;
 
@@ -1227,64 +1202,76 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     if(key == GLFW_KEY_E && action == GLFW_PRESS){
         if(interactable_object != NULL && !is_inspecting){
            is_inspecting = true;
+            g_AngleX = 0.0;
+            g_AngleY = 0.0;
+            g_AngleZ = 0.0;
         }
     }
 
     /* coordenadas da camera: x, y, z*/
     /* W -> move para frente */
-    if(key == GLFW_KEY_W){
-        if(action == GLFW_PRESS){
-            movingForward = true;
-        } else if(action == GLFW_RELEASE){
-            movingForward = false;
+
+    if(!is_inspecting && action == GLFW_PRESS){
+        if(key == GLFW_KEY_W ){
+                movingForward = true;
+        }
+
+        /* S -> move para tras */
+        if(key == GLFW_KEY_S){
+                movingBackward = true;
+        }
+
+        /* A -> move para esquerda */
+        if(key == GLFW_KEY_A){
+                movingLeft = true;
+        }
+
+        /* D -> move para direita */
+        if(key == GLFW_KEY_D ){
+                movingRight = true;
+        }
+
+        /* Space -> move para cima */
+        if(key == GLFW_KEY_SPACE ){
+                movingUp = true;
+        }
+
+        /* ctrl -> move para baixo */
+        if(key == GLFW_KEY_LEFT_CONTROL){
+                movingDown = true;
         }
     }
 
-    /* S -> move para tras */
-    if(key == GLFW_KEY_S){
-        if(action == GLFW_PRESS){
-            movingBackward = true;
-        } else if(action == GLFW_RELEASE){
-            movingBackward = false;
+    if(action == GLFW_RELEASE){
+        if(key == GLFW_KEY_W ){
+                movingForward = false;
+        }
+
+        /* S -> move para tras */
+        if(key == GLFW_KEY_S){
+                movingBackward = false;
+        }
+
+        /* A -> move para esquerda */
+        if(key == GLFW_KEY_A){
+                movingLeft = false;
+        }
+
+        /* D -> move para direita */
+        if(key == GLFW_KEY_D ){
+                movingRight = false;
+        }
+
+        /* Space -> move para cima */
+        if(key == GLFW_KEY_SPACE ){
+                movingUp = false;
+        }
+
+        /* ctrl -> move para baixo */
+        if(key == GLFW_KEY_LEFT_CONTROL){
+                movingDown = false;
         }
     }
-
-    /* A -> move para esquerda */
-    if(key == GLFW_KEY_A){
-        if(action == GLFW_PRESS){
-            movingLeft = true;
-        } else if(action == GLFW_RELEASE){
-            movingLeft = false;
-        }
-    }
-
-    /* D -> move para direita */
-    if(key == GLFW_KEY_D){
-        if(action == GLFW_PRESS){
-            movingRight = true;
-        } else if(action == GLFW_RELEASE){
-            movingRight = false;
-        }
-    }
-
-    /* Space -> move para cima */
-    if(key == GLFW_KEY_SPACE){
-        if(action == GLFW_PRESS){
-            movingUp = true;
-        } else if(action == GLFW_RELEASE){
-            movingUp = false;
-        }
-    }
-
-    /* ctrl -> move para baixo */
-    if(key == GLFW_KEY_LEFT_CONTROL){
-        if(action == GLFW_PRESS){
-            movingDown = true;
-        } else if(action == GLFW_RELEASE){
-            movingDown = false;
-        }
-    }
-
 
 
 }
