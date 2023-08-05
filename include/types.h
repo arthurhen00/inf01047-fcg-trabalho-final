@@ -70,6 +70,7 @@ struct SceneObject
     glm::mat4    model;
     int          obj_index;
     bool         inspectable;
+    bool         hasCollision = true;
 
     glm::vec4 get_bbox_min(){
         return model * bbox_min;

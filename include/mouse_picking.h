@@ -137,8 +137,11 @@ SceneObject* GetInteractableObject(std::map<std::string,SceneObject>& virtual_sc
         if(obj->inspectable && TestRayOBBIntersection(camera_position_c,camera_view_vector,obj->bbox_min,obj->bbox_max,obj->model,distance)){
            if(distance < minDistance){
                 minDistance = distance;
-                if(minDistance < 1)
-                    interactableObject = obj;
+                if(minDistance < 1){
+                    if(obj->inspectable == true){
+                        interactableObject = obj;
+                    }
+                }
             }
         }
 

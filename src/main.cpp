@@ -52,7 +52,7 @@
 #include "utils.h"
 #include "matrices.h"
 
-
+#include "collisions.h"
 
 
 #include "glm/gtx/string_cast.hpp"
@@ -161,7 +161,7 @@ GLint g_object_id_uniform;
 SceneObject* interactable_object;
 bool is_inspecting = false;
 // Variaveis da free cam
-float cameraX = 0.0f;
+float cameraX = -1.0f;
 float cameraY = 0.0f;
 float cameraZ = 1.0f;
 bool movingForward  = false;
@@ -253,7 +253,7 @@ int main(int argc, char* argv[])
     ObjModel spheremodel("../../data/sphere.obj");
     ComputeNormals(&spheremodel);
     BuildTrianglesAndAddToVirtualScene(&spheremodel);
-    g_VirtualScene.at("the_sphere").inspectable = true;
+    g_VirtualScene.at("the_sphere").inspectable = false;
 
     ObjModel bunnymodel("../../data/bunny.obj");
     ComputeNormals(&bunnymodel);
@@ -264,6 +264,7 @@ int main(int argc, char* argv[])
     ComputeNormals(&planemodel);
     BuildTrianglesAndAddToVirtualScene(&planemodel);
     g_VirtualScene.at("the_plane").inspectable = true;
+    g_VirtualScene.at("the_plane").hasCollision = false;
 
     ObjModel boxmodel("../../data/box/box.obj");
     ComputeNormals(&boxmodel);
@@ -275,6 +276,7 @@ int main(int argc, char* argv[])
     BuildTrianglesAndAddToVirtualScene(&skyboxmodel);
     g_VirtualScene.at("skybox").inspectable = false;
 
+    std::vector<std::string> objNames = {"the_sphere","the_bunny","the_plane","box.jpg"};
 
     if ( argc > 1 )
     {
@@ -371,27 +373,87 @@ int main(int argc, char* argv[])
         float delta_t = current_time - prev_time;
         prev_time = current_time;
 
+        bool colF = false;
+        bool movF = false;
 
-        if (movingForward) {
+        bool colB = false;
+        bool movB = false;
+
+        bool colR = false;
+        bool movR = false;
+
+        bool colL = false;
+        bool movL = false;
+        for(int i = 0; i < objNames.size(); i++){
+            if(objNames[i] != objNames[0] && g_VirtualScene.at(objNames[i]).hasCollision ){
+                float nextX = cameraX;
+                float nextZ = cameraZ;
+                SceneObject nextObj = g_VirtualScene.at("the_sphere");
+
+                if (movingForward) {
+                    movF = true;
+                    nextX += -w.x * delta_t * speed;
+                    nextZ += -w.z * delta_t * speed;
+                    glm::mat4 modelNextPosition = Matrix_Translate(nextX,cameraY,nextZ);
+                    nextObj.model = modelNextPosition;
+                    if(isBoundingBoxIntersection(nextObj, g_VirtualScene.at(objNames[i]))){
+                        colF = true;
+                    }
+                }
+                if(movingBackward){
+                    movB = true;
+                    nextX += w.x * delta_t * speed;
+                    nextZ += w.z * delta_t * speed;
+                    glm::mat4 modelNextPosition = Matrix_Translate(nextX,cameraY,nextZ);
+                    nextObj.model = modelNextPosition;
+                    if(isBoundingBoxIntersection(nextObj, g_VirtualScene.at(objNames[i]))){
+                        colB = true;
+                    }
+                }
+                if(movingRight){
+                    movR = true;
+                    nextX += u.x * delta_t * speed;
+                    nextZ += u.z * delta_t * speed;
+                    glm::mat4 modelNextPosition = Matrix_Translate(nextX,cameraY,nextZ);
+                    nextObj.model = modelNextPosition;
+                    if(isBoundingBoxIntersection(nextObj, g_VirtualScene.at(objNames[i]))){
+                        colR = true;
+                    }
+                }
+                if(movingLeft){
+                    movL = true;
+                    nextX += -u.x * delta_t * speed;
+                    nextZ += -u.z * delta_t * speed;
+                    glm::mat4 modelNextPosition = Matrix_Translate(nextX,cameraY,nextZ);
+                    nextObj.model = modelNextPosition;
+                    if(isBoundingBoxIntersection(nextObj, g_VirtualScene.at(objNames[i]))){
+                        colL = true;
+                    }
+                }
+            }
+            //std::cout << i << " att do mov: " << movF << std::endl;
+        }
+
+        // Atualizar posicao depois de fazer todos os testes
+
+        if(!colF && movF){
             cameraX += -w.x * delta_t * speed;
-            cameraY += -w.y * delta_t * speed;
             cameraZ += -w.z * delta_t * speed;
         }
-        if(movingBackward){
+        if(!colB && movB){
             cameraX += w.x * delta_t * speed;
-            cameraY += w.y * delta_t * speed;
             cameraZ += w.z * delta_t * speed;
         }
-        if(movingRight){
+        if(!colR && movR){
             cameraX += u.x * delta_t * speed;
-            cameraY += u.y * delta_t * speed;
             cameraZ += u.z * delta_t * speed;
         }
-        if(movingLeft){
+        if(!colL && movL){
             cameraX += -u.x * delta_t * speed;
-            cameraY += -u.y * delta_t * speed;
             cameraZ += -u.z * delta_t * speed;
         }
+
+        /* Movimentacao no Y *Testes* */
         if(movingUp){
             cameraY += (u.y + 1) * delta_t * speed;
         }
@@ -439,7 +501,8 @@ int main(int argc, char* argv[])
 
         if(!is_inspecting){
             // Desenhamos o modelo da esfera
-            model = Matrix_Translate(-1.0f,0.0f,0.0f);
+            /* Usando a esfeca como modelo de colisao para o personagem*/
+            model = Matrix_Translate(cameraX,cameraY,cameraZ);
             g_VirtualScene.at("the_sphere").model = model;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, SPHERE);
