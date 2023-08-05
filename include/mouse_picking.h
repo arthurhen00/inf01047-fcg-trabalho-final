@@ -123,31 +123,28 @@ bool TestRayOBBIntersection(
 
 }
 
-SceneObject* GetInteractableObject(std::map<std::string,SceneObject>& virtual_scene,glm::vec4& camera_position_c, glm::vec4& camera_view_vector ){
-    SceneObject* interactableObject = NULL;
+SceneObject GetInteractableObject(std::vector<SceneObject>& virtual_scene ,glm::vec4& camera_position_c, glm::vec4& camera_view_vector ){
+    SceneObject interactableObject;
+    interactableObject.name = "NULL";
 
     float minDistance = 10000;
 
-    std::map<std::string,SceneObject>::iterator it = virtual_scene.begin();
-    while(it != virtual_scene.end()){
-        SceneObject* obj = &it->second;
+    int scene_size = virtual_scene.size();
+    for(int i = 0; i < scene_size; i++){
+        SceneObject obj = virtual_scene[i];
 
         float distance;
 
-        if(obj->inspectable && TestRayOBBIntersection(camera_position_c,camera_view_vector,obj->bbox_min,obj->bbox_max,obj->model,distance)){
+        if(obj.inspectable && TestRayOBBIntersection(camera_position_c,camera_view_vector,obj.bbox_min,obj.bbox_max,obj.model,distance)){
            if(distance < minDistance){
                 minDistance = distance;
                 if(minDistance < 1){
-                    if(obj->inspectable == true){
+                    if(obj.inspectable == true){
                         interactableObject = obj;
                     }
                 }
             }
         }
-
-
-
-        it++;
     }
     return interactableObject;
 }

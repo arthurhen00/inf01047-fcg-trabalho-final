@@ -158,7 +158,7 @@ GLint g_projection_uniform;
 GLint g_object_id_uniform;
 
 
-SceneObject* interactable_object;
+SceneObject interactable_object;
 bool is_inspecting = false;
 // Variaveis da free cam
 float cameraX = -1.0f;
@@ -253,30 +253,35 @@ int main(int argc, char* argv[])
     ObjModel spheremodel("../../data/sphere.obj");
     ComputeNormals(&spheremodel);
     BuildTrianglesAndAddToVirtualScene(&spheremodel);
-    g_VirtualScene.at("the_sphere").inspectable = false;
 
     ObjModel bunnymodel("../../data/bunny.obj");
     ComputeNormals(&bunnymodel);
     BuildTrianglesAndAddToVirtualScene(&bunnymodel);
-    g_VirtualScene.at("the_bunny").inspectable = true;
 
     ObjModel planemodel("../../data/plane.obj");
     ComputeNormals(&planemodel);
     BuildTrianglesAndAddToVirtualScene(&planemodel);
-    g_VirtualScene.at("the_plane").inspectable = true;
     g_VirtualScene.at("the_plane").hasCollision = false;
 
     ObjModel boxmodel("../../data/box/box.obj");
     ComputeNormals(&boxmodel);
     BuildTrianglesAndAddToVirtualScene(&boxmodel);
-    g_VirtualScene.at("box.jpg").inspectable = true;
 
     ObjModel skyboxmodel("../../data/skybox.obj");
     ComputeNormals(&skyboxmodel);
     BuildTrianglesAndAddToVirtualScene(&skyboxmodel);
-    g_VirtualScene.at("skybox").inspectable = false;
 
-    std::vector<std::string> objNames = {"the_sphere","the_bunny","the_plane","box.jpg"};
+    /* Criacao de objetos */
+    SceneObject chao = g_VirtualScene.at("the_plane");
+
+    SceneObject player = g_VirtualScene.at("the_sphere");
+
+    SceneObject coelho = g_VirtualScene.at("the_bunny");
+
+    SceneObject parede1 = g_VirtualScene.at("box.jpg");
+
+    SceneObject parede2 = g_VirtualScene.at("box.jpg");
+
 
     if ( argc > 1 )
     {
@@ -340,8 +345,8 @@ int main(int argc, char* argv[])
         //glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
         glm::vec4 camera_view_vector;
 
-        if(is_inspecting && interactable_object != NULL){
-            glm::vec4 bbox_center = interactable_object->get_bbox_center();
+        if(is_inspecting && interactable_object.name != "NULL"){
+            glm::vec4 bbox_center = interactable_object.get_bbox_center();
             glm::vec4 vec = glm::normalize(glm::vec4(0.0f,0.0f,1.0f,0.0f)) * g_CameraDistance;
             camera_position_c  = bbox_center + vec;
             // Ponto "l", para onde a câmera (look-at) estará sempre olhando
@@ -384,11 +389,14 @@ int main(int argc, char* argv[])
 
         bool colL = false;
         bool movL = false;
-        for(int i = 0; i < objNames.size(); i++){
-            if(objNames[i] != objNames[0] && g_VirtualScene.at(objNames[i]).hasCollision ){
+
+        std::vector<SceneObject> objectsGroup = {coelho, parede1, parede2};
+
+        for(int i = 0; i < objectsGroup.size(); i++){
+            if(objectsGroup[i].hasCollision ){
                 float nextX = cameraX;
                 float nextZ = cameraZ;
-                SceneObject nextObj = g_VirtualScene.at("the_sphere");
+                SceneObject nextObj = player;
 
                 if (movingForward) {
                     movF = true;
@@ -396,7 +404,7 @@ int main(int argc, char* argv[])
                     nextZ += -w.z * delta_t * speed;
                     glm::mat4 modelNextPosition = Matrix_Translate(nextX,cameraY,nextZ);
                     nextObj.model = modelNextPosition;
-                    if(isBoundingBoxIntersection(nextObj, g_VirtualScene.at(objNames[i]))){
+                    if(isBoundingBoxIntersection(nextObj, objectsGroup[i] )){
                         colF = true;
                     }
                 }
@@ -406,7 +414,7 @@ int main(int argc, char* argv[])
                     nextZ += w.z * delta_t * speed;
                     glm::mat4 modelNextPosition = Matrix_Translate(nextX,cameraY,nextZ);
                     nextObj.model = modelNextPosition;
-                    if(isBoundingBoxIntersection(nextObj, g_VirtualScene.at(objNames[i]))){
+                    if(isBoundingBoxIntersection(nextObj, objectsGroup[i] )){
                         colB = true;
                     }
                 }
@@ -416,7 +424,7 @@ int main(int argc, char* argv[])
                     nextZ += u.z * delta_t * speed;
                     glm::mat4 modelNextPosition = Matrix_Translate(nextX,cameraY,nextZ);
                     nextObj.model = modelNextPosition;
-                    if(isBoundingBoxIntersection(nextObj, g_VirtualScene.at(objNames[i]))){
+                    if(isBoundingBoxIntersection(nextObj, objectsGroup[i] )){
                         colR = true;
                     }
                 }
@@ -426,12 +434,11 @@ int main(int argc, char* argv[])
                     nextZ += -u.z * delta_t * speed;
                     glm::mat4 modelNextPosition = Matrix_Translate(nextX,cameraY,nextZ);
                     nextObj.model = modelNextPosition;
-                    if(isBoundingBoxIntersection(nextObj, g_VirtualScene.at(objNames[i]))){
+                    if(isBoundingBoxIntersection(nextObj, objectsGroup[i] )){
                         colL = true;
                     }
                 }
             }
-            //std::cout << i << " att do mov: " << movF << std::endl;
         }
 
         // Atualizar posicao depois de fazer todos os testes
@@ -503,21 +510,28 @@ int main(int argc, char* argv[])
             // Desenhamos o modelo da esfera
             /* Usando a esfeca como modelo de colisao para o personagem*/
             model = Matrix_Translate(cameraX,cameraY,cameraZ);
-            g_VirtualScene.at("the_sphere").model = model;
+            player.model = model;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, SPHERE);
             DrawVirtualObject("the_sphere");
 
             // Coelho
             model = Matrix_Translate(1.0f,0.0f,0.0f);
-            g_VirtualScene.at("the_bunny").model = model;
+            coelho.model = model;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, BUNNY);
             DrawVirtualObject("the_bunny");
 
             //Desenhamos o modelo da caixa
             model = Matrix_Translate(3.50f,-0.28f,0.0f);
-            g_VirtualScene.at("box.jpg").model = model;g_VirtualScene.at("box.jpg").model = model;
+            parede1.model = model;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, BOX);
+            DrawVirtualObject("box.jpg");
+
+            //Desenhamos o modelo da caixa
+            model = Matrix_Translate(8.50f,-0.28f,0.0f);
+            parede2.model = model;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, BOX);
             DrawVirtualObject("box.jpg");
@@ -528,14 +542,14 @@ int main(int argc, char* argv[])
         model = Matrix_Translate(0.0f,-1.0f,0.0f)
             * Matrix_Scale(50.0f, 2.0f, 50.0f) ;
 
-        g_VirtualScene.at("the_plane").model = model;
+        chao.model = model;
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("the_plane");
 
 
 
-        if(is_inspecting && interactable_object != NULL){
+        if(is_inspecting && interactable_object.name != "NULL"){
             model = Matrix_Translate(camera_position_c.x,camera_position_c.y,camera_position_c.z);
 
             glDisable(GL_DEPTH_TEST);
@@ -546,13 +560,13 @@ int main(int argc, char* argv[])
             DrawVirtualObject("skybox");
             glEnable(GL_CULL_FACE);
 
-            model = interactable_object->model
+            model = interactable_object.model
                   * Matrix_Rotate_Z(g_AngleZ)
                   * Matrix_Rotate_Y(g_AngleY)
                   * Matrix_Rotate_X(g_AngleX);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, interactable_object->obj_index);
-            DrawVirtualObject(interactable_object->name.c_str());
+            glUniform1i(g_object_id_uniform, interactable_object.obj_index);
+            DrawVirtualObject(interactable_object.name.c_str());
 
             glEnable(GL_DEPTH_TEST);
 
@@ -560,10 +574,10 @@ int main(int argc, char* argv[])
         }
 
         if(!is_inspecting){
-            interactable_object = GetInteractableObject(g_VirtualScene,camera_position_c,camera_view_vector);
+            interactable_object = GetInteractableObject(objectsGroup,camera_position_c,camera_view_vector);
         }
 
-        /* Exemplo aplicacao curva de bezier*/
+        /* Exemplo aplicacao curva de bezier
         if (reverseDirection){
             t_bezier -= 0.0001f;
         } else {
@@ -580,35 +594,7 @@ int main(int argc, char* argv[])
         glm::vec3 ponto3 = glm::vec3(2.0, 5.0f, 0.0f);
         glm::vec3 ponto4 = glm::vec3(3.0, 0.0f, 0.0f);
         glm::vec3 aaa = calculateBezierPoint({ponto1, ponto2, ponto3, ponto4}, t_bezier);
-
-        /*
-        glm::vec3 a = ponto1 + t_bezier*(ponto2 - ponto1);
-        glm::vec3 b = ponto2 + t_bezier*(ponto3 - ponto2);
-        glm::vec3 c = ponto3 + t_bezier*(ponto4 - ponto3);
-
-        glm::vec3 aa = a + t_bezier*(b - a);
-        glm::vec3 bb = b + t_bezier*(c - b);
-
-        glm::vec3 aaa = aa + t_bezier*(bb - aa);
-        *;
-
-        /* tronco */
-        model = Matrix_Identity();
-        model = model * Matrix_Translate(aaa.x, aaa.y, aaa.z)  //(0,2.0f,-4.0f)
-                      * Matrix_Rotate_Z(1.57);
-        PushMatrix(model);
-            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, BOX);
-            DrawVirtualObject("box.jpg");
-        PopMatrix(model);
-        /* Cabeca */
-        PushMatrix(model);
-            model = model * Matrix_Translate(2.0f, 0.0f, 0.0f);
-            model = model * Matrix_Scale(0.5f, 0.5f, 0.5f);
-            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, SPHERE);
-            DrawVirtualObject("the_sphere");
-        PopMatrix(model);
+        */
 
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
@@ -1315,7 +1301,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     }
 
     if(key == GLFW_KEY_E && action == GLFW_PRESS){
-        if(interactable_object != NULL && !is_inspecting){
+        if(interactable_object.name != "NULL" && !is_inspecting){
            is_inspecting = true;
             g_AngleX = 0.0;
             g_AngleY = 0.0;

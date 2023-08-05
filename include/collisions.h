@@ -16,8 +16,8 @@ bool isBoundingBoxIntersection(SceneObject& ob1, SceneObject& ob2) {
 
     //printf("MAX:(%.4f)(%.4f)(%.4f)", cur_bbox_max1.x,cur_bbox_max1.y,cur_bbox_max1.z);
     //printf("MIN:(%.4f)(%.4f)(%.4f)|", cur_bbox_min2.x,cur_bbox_min2.y,cur_bbox_min2.z);
-    //std::cout << ob2.name;
-    //printf("  |%d\n", yAxis && xAxis && zAxis);
+    std::cout << ob2.name;
+    printf("  |%d\n", yAxis && xAxis && zAxis);
 
     return yAxis && xAxis && zAxis;
 }
