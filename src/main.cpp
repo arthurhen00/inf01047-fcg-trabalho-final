@@ -43,6 +43,7 @@
 // Headers da biblioteca para carregar modelos obj
 #include <tiny_obj_loader.h>
 
+#include <stb_image.h>
 
 #include "types.h"
 #include "mouse_picking.h"
@@ -58,6 +59,7 @@
 #include "glm/gtx/string_cast.hpp"
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
+
 
 // Declaração de funções utilizadas para pilha de matrizes de modelagem.
 void PushMatrix(glm::mat4 M);
@@ -102,6 +104,8 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+
+void LoadTextureImage(const char* filename);
 
 // Abaixo definimos variáveis globais utilizadas em várias funções do código.
 
@@ -150,20 +154,26 @@ bool g_UsePerspectiveProjection = true;
 // Variável que controla se o texto informativo será mostrado na tela.
 bool g_ShowInfoText = true;
 
+
+// Número de texturas carregadas pela função LoadTextureImage()
+GLuint g_NumLoadedTextures = 0;
+
 // Variáveis que definem um programa de GPU (shaders). Veja função LoadShadersFromFiles().
 GLuint g_GpuProgramID = 0;
 GLint g_model_uniform;
 GLint g_view_uniform;
 GLint g_projection_uniform;
 GLint g_object_id_uniform;
+GLint g_bbox_min_uniform;
+GLint g_bbox_max_uniform;
 
 
 SceneObject interactable_object;
 bool is_inspecting = false;
 // Variaveis da free cam
 float cameraX = -1.0f;
-float cameraY = 0.0f;
-float cameraZ = 1.0f;
+float cameraY = 6.0f;
+float cameraZ = 6.0f;
 bool movingForward  = false;
 bool movingBackward = false;
 bool movingLeft     = false;
@@ -248,6 +258,11 @@ int main(int argc, char* argv[])
     //
     LoadShadersFromFiles();
 
+    LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");      // TextureImage0
+    LoadTextureImage("../../data/tc-earth_nightmap_citylights.gif"); // TextureImage1
+    LoadTextureImage("../../data/box/texture.jpg"); // TextureImage2
+
+
     // Construímos a representação de objetos geométricos através de malhas de triângulos
 
     ObjModel spheremodel("../../data/sphere.obj");
@@ -275,6 +290,8 @@ int main(int argc, char* argv[])
     SceneObject chao = g_VirtualScene.at("the_plane");
 
     SceneObject player = g_VirtualScene.at("the_sphere");
+
+    SceneObject esfera = g_VirtualScene.at("the_sphere");
 
     SceneObject coelho = g_VirtualScene.at("the_bunny");
 
@@ -390,7 +407,7 @@ int main(int argc, char* argv[])
         bool colL = false;
         bool movL = false;
 
-        std::vector<SceneObject> objectsGroup = {coelho, parede1, parede2};
+        std::vector<SceneObject> objectsGroup = {coelho, parede1, parede2 ,esfera};
 
         for(int i = 0; i < objectsGroup.size(); i++){
             if(objectsGroup[i].hasCollision ){
@@ -521,6 +538,14 @@ int main(int argc, char* argv[])
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, BUNNY);
             DrawVirtualObject("the_bunny");
+
+            // Coelho
+            model = Matrix_Translate(-2.0f,0.0f,0.0f);
+            esfera.model = model;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, SPHERE);
+            DrawVirtualObject("the_sphere");
+
 
             //Desenhamos o modelo da caixa
             model = Matrix_Translate(3.50f,-0.28f,0.0f);
@@ -698,6 +723,15 @@ void LoadShadersFromFiles()
     g_view_uniform       = glGetUniformLocation(g_GpuProgramID, "view"); // Variável da matriz "view" em shader_vertex.glsl
     g_projection_uniform = glGetUniformLocation(g_GpuProgramID, "projection"); // Variável da matriz "projection" em shader_vertex.glsl
     g_object_id_uniform  = glGetUniformLocation(g_GpuProgramID, "object_id"); // Variável "object_id" em shader_fragment.glsl
+    g_bbox_min_uniform   = glGetUniformLocation(g_GpuProgramID, "bbox_min");
+    g_bbox_max_uniform   = glGetUniformLocation(g_GpuProgramID, "bbox_max");
+
+    // Variáveis em "shader_fragment.glsl" para acesso das imagens de textura
+    glUseProgram(g_GpuProgramID);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage0"), 0);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage1"), 1);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage2"), 2);
+    glUseProgram(0);
 }
 
 
@@ -763,7 +797,7 @@ void ComputeNormals(ObjModel* model)
 
             // PREENCHA AQUI o cálculo da normal de um triângulo cujos vértices
             // estão nos pontos "a", "b", e "c", definidos no sentido anti-horário.
-            const glm::vec4  n = crossproduct((a - b) , (b - c));
+            const glm::vec4  n = crossproduct(b-a,c-a);
 
             for (size_t vertex = 0; vertex < 3; ++vertex)
             {
@@ -840,8 +874,6 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
                 // Sulzbach (2017/1) apontou que a maneira correta de testar se
                 // existem normais e coordenadas de textura no ObjModel é
                 // comparando se o índice retornado é -1. Fazemos isso abaixo.
-
-
 
                 if ( idx.normal_index != -1 )
                 {
@@ -1509,6 +1541,57 @@ void TextRendering_ShowFramesPerSecond(GLFWwindow* window)
     float charwidth = TextRendering_CharWidth(window);
 
     TextRendering_PrintString(window, buffer, 1.0f-(numchars + 1)*charwidth, 1.0f-lineheight, 1.0f);
+}
+
+void LoadTextureImage(const char* filename)
+{
+    printf("Carregando imagem \"%s\"... ", filename);
+
+    // Primeiro fazemos a leitura da imagem do disco
+    stbi_set_flip_vertically_on_load(true);
+    int width;
+    int height;
+    int channels;
+    unsigned char *data = stbi_load(filename, &width, &height, &channels, 3);
+
+    if ( data == NULL )
+    {
+        fprintf(stderr, "ERROR: Cannot open image file \"%s\".\n", filename);
+        std::exit(EXIT_FAILURE);
+    }
+
+    printf("OK (%dx%d).\n", width, height);
+
+    // Agora criamos objetos na GPU com OpenGL para armazenar a textura
+    GLuint texture_id;
+    GLuint sampler_id;
+    glGenTextures(1, &texture_id);
+    glGenSamplers(1, &sampler_id);
+
+    // Veja slides 95-96 do documento Aula_20_Mapeamento_de_Texturas.pdf
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // Parâmetros de amostragem da textura.
+    glSamplerParameteri(sampler_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Agora enviamos a imagem lida do disco para a GPU
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+    glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+
+    GLuint textureunit = g_NumLoadedTextures;
+    glActiveTexture(GL_TEXTURE0 + textureunit);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindSampler(textureunit, sampler_id);
+
+    stbi_image_free(data);
+
+    g_NumLoadedTextures += 1;
 }
 
 // Função para debugging: imprime no terminal todas informações de um modelo
