@@ -604,18 +604,16 @@ int main(int argc, char* argv[])
             glUniform1i(g_object_id_uniform, BOX);
             DrawVirtualObject("box.jpg");
 
+            //Chão
+            model = Matrix_Translate(0.0f,-1.0f,0.0f)
+                * Matrix_Scale(50.0f, 2.0f, 50.0f) ;
+
+            chao.model = model;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, PLANE);
+            DrawVirtualObject("the_plane");
+
         }
-
-        //Chão
-        model = Matrix_Translate(0.0f,-1.0f,0.0f)
-            * Matrix_Scale(50.0f, 2.0f, 50.0f) ;
-
-        chao.model = model;
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, PLANE);
-        DrawVirtualObject("the_plane");
-
-
 
         if(is_inspecting && interactable_object.name != "NULL"){
             model = Matrix_Translate(camera_position_c.x,camera_position_c.y,camera_position_c.z);
@@ -627,6 +625,7 @@ int main(int argc, char* argv[])
             glUniform1i(g_object_id_uniform, SKYBOX);
             DrawVirtualObject("skybox");
             glEnable(GL_CULL_FACE);
+            glEnable(GL_DEPTH_TEST);
 
             model = interactable_object.model
                   * Matrix_Rotate_Z(g_AngleZ)
@@ -636,7 +635,7 @@ int main(int argc, char* argv[])
             glUniform1i(g_object_id_uniform, interactable_object.obj_index);
             DrawVirtualObject(interactable_object.name.c_str());
 
-            glEnable(GL_DEPTH_TEST);
+
 
 
         }
