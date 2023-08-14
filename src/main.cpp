@@ -395,16 +395,20 @@ int main(int argc, char* argv[])
         float delta_t = current_time - prev_time;
         prev_time = current_time;
 
-        bool colF = false;
+        bool colFX = false;
+        bool colFZ = false;
         bool movF = false;
 
-        bool colB = false;
+        bool colBX = false;
+        bool colBZ = false;
         bool movB = false;
 
-        bool colR = false;
+        bool colRX = false;
+        bool colRZ = false;
         bool movR = false;
 
-        bool colL = false;
+        bool colLX = false;
+        bool colLZ = false;
         bool movL = false;
 
         std::vector<SceneObject> objectsGroup = {coelho, parede1, parede2 ,esfera};
@@ -413,67 +417,106 @@ int main(int argc, char* argv[])
             if(objectsGroup[i].hasCollision ){
                 float nextX = cameraX;
                 float nextZ = cameraZ;
-                SceneObject nextObj = player;
-
-                if (movingForward) {
+                SceneObject nextObjX = player;
+                SceneObject nextObjZ = player;
+                if (movingForward){
                     movF = true;
                     nextX += -w.x * delta_t * speed;
                     nextZ += -w.z * delta_t * speed;
-                    glm::mat4 modelNextPosition = Matrix_Translate(nextX,cameraY,nextZ);
-                    nextObj.model = modelNextPosition;
-                    if(isBoundingBoxIntersection(nextObj, objectsGroup[i] )){
-                        colF = true;
+                    glm::mat4 modelNextPositionX = Matrix_Translate(nextX,cameraY,cameraZ);
+                    glm::mat4 modelNextPositionZ = Matrix_Translate(cameraX,cameraY,nextZ);
+                    nextObjX.model = modelNextPositionX;
+                    nextObjZ.model = modelNextPositionZ;
+
+                    if(isBoundingBoxIntersection(nextObjX, objectsGroup[i])){
+                        colFX = true;
+                    }
+                    if(isBoundingBoxIntersection(nextObjZ, objectsGroup[i])){
+                        colFZ = true;
                     }
                 }
-                if(movingBackward){
+                 if(movingBackward){
                     movB = true;
                     nextX += w.x * delta_t * speed;
                     nextZ += w.z * delta_t * speed;
-                    glm::mat4 modelNextPosition = Matrix_Translate(nextX,cameraY,nextZ);
-                    nextObj.model = modelNextPosition;
-                    if(isBoundingBoxIntersection(nextObj, objectsGroup[i] )){
-                        colB = true;
+                    glm::mat4 modelNextPositionX = Matrix_Translate(nextX,cameraY,cameraZ);
+                    glm::mat4 modelNextPositionZ = Matrix_Translate(cameraX,cameraY,nextZ);
+                    nextObjX.model = modelNextPositionX;
+                    nextObjZ.model = modelNextPositionZ;
+
+                    if(isBoundingBoxIntersection(nextObjX, objectsGroup[i])){
+                        colBX = true;
+                    }
+                    if(isBoundingBoxIntersection(nextObjZ, objectsGroup[i])){
+                        colBZ = true;
                     }
                 }
                 if(movingRight){
                     movR = true;
                     nextX += u.x * delta_t * speed;
                     nextZ += u.z * delta_t * speed;
-                    glm::mat4 modelNextPosition = Matrix_Translate(nextX,cameraY,nextZ);
-                    nextObj.model = modelNextPosition;
-                    if(isBoundingBoxIntersection(nextObj, objectsGroup[i] )){
-                        colR = true;
+                    glm::mat4 modelNextPositionX = Matrix_Translate(nextX,cameraY,cameraZ);
+                    glm::mat4 modelNextPositionZ = Matrix_Translate(cameraX,cameraY,nextZ);
+                    nextObjX.model = modelNextPositionX;
+                    nextObjZ.model = modelNextPositionZ;
+
+                    if(isBoundingBoxIntersection(nextObjX, objectsGroup[i])){
+                        colRX = true;
+                    }
+                    if(isBoundingBoxIntersection(nextObjZ, objectsGroup[i])){
+                        colRZ = true;
                     }
                 }
                 if(movingLeft){
                     movL = true;
                     nextX += -u.x * delta_t * speed;
                     nextZ += -u.z * delta_t * speed;
-                    glm::mat4 modelNextPosition = Matrix_Translate(nextX,cameraY,nextZ);
-                    nextObj.model = modelNextPosition;
-                    if(isBoundingBoxIntersection(nextObj, objectsGroup[i] )){
-                        colL = true;
+                    glm::mat4 modelNextPositionX = Matrix_Translate(nextX,cameraY,cameraZ);
+                    glm::mat4 modelNextPositionZ = Matrix_Translate(cameraX,cameraY,nextZ);
+                    nextObjX.model = modelNextPositionX;
+                    nextObjZ.model = modelNextPositionZ;
+
+                    if(isBoundingBoxIntersection(nextObjX, objectsGroup[i])){
+                        colLX = true;
+                    }
+                    if(isBoundingBoxIntersection(nextObjZ, objectsGroup[i])){
+                        colLZ = true;
                     }
                 }
             }
         }
 
         // Atualizar posicao depois de fazer todos os testes
-
-        if(!colF && movF){
+        if(!colFX && !colFZ && movF){
             cameraX += -w.x * delta_t * speed;
             cameraZ += -w.z * delta_t * speed;
+        } else if(!colFX && movF){
+            cameraX += -w.x * delta_t * speed;
+        } else if(!colFZ && movF){
+            cameraZ += -w.z * delta_t * speed;
         }
-        if(!colB && movB){
+        if(!colBX && !colBZ && movB){
             cameraX += w.x * delta_t * speed;
             cameraZ += w.z * delta_t * speed;
+        } else if(!colBX && movB){
+            cameraX += w.x * delta_t * speed;
+        } else if(!colBZ && movB){
+            cameraZ += w.z * delta_t * speed;
         }
-        if(!colR && movR){
+        if(!colRX && !colRZ && movR){
             cameraX += u.x * delta_t * speed;
             cameraZ += u.z * delta_t * speed;
+        } else if(!colRX && movR){
+            cameraX += u.x * delta_t * speed;
+        } else if(!colRZ && movR){
+            cameraZ += u.z * delta_t * speed;
         }
-        if(!colL && movL){
+        if(!colLX && !colLZ && movL){
             cameraX += -u.x * delta_t * speed;
+            cameraZ += -u.z * delta_t * speed;
+        } else if(!colLX && movL){
+            cameraX += -u.x * delta_t * speed;
+        } else if(!colLZ && movL){
             cameraZ += -u.z * delta_t * speed;
         }
 
