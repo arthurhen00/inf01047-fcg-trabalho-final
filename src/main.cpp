@@ -361,6 +361,7 @@ int main(int argc, char* argv[])
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
         //glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
         glm::vec4 camera_view_vector;
+        glm::vec4 camera_view_vector_mov = -glm::vec4(x, 0.0f, z, 0.0f);
 
         if(is_inspecting && interactable_object.name != "NULL"){
             glm::vec4 bbox_center = interactable_object.get_bbox_center();
@@ -387,7 +388,7 @@ int main(int argc, char* argv[])
 
 
         /* Att posicao de camera */
-        glm::vec4 w = -camera_view_vector/norm(camera_view_vector);
+        glm::vec4 w = -camera_view_vector_mov/norm(camera_view_vector_mov);
         glm::vec4 u = crossproduct(camera_up_vector, w)/norm(crossproduct(camera_up_vector, w)); /*camera_up_vector * w;*/
 
         // Atualiza delta de tempo
@@ -487,36 +488,31 @@ int main(int argc, char* argv[])
         }
 
         // Atualizar posicao depois de fazer todos os testes
-        if(!colFX && !colFZ && movF){
+        if(!colFX && movF){
             cameraX += -w.x * delta_t * speed;
-            cameraZ += -w.z * delta_t * speed;
-        } else if(!colFX && movF){
-            cameraX += -w.x * delta_t * speed;
-        } else if(!colFZ && movF){
+        }
+        if(!colFZ && movF){
             cameraZ += -w.z * delta_t * speed;
         }
-        if(!colBX && !colBZ && movB){
+
+        if(!colBX && movB){
             cameraX += w.x * delta_t * speed;
-            cameraZ += w.z * delta_t * speed;
-        } else if(!colBX && movB){
-            cameraX += w.x * delta_t * speed;
-        } else if(!colBZ && movB){
+        }
+        if(!colBZ && movB){
             cameraZ += w.z * delta_t * speed;
         }
-        if(!colRX && !colRZ && movR){
+
+        if(!colRX && movR){
             cameraX += u.x * delta_t * speed;
-            cameraZ += u.z * delta_t * speed;
-        } else if(!colRX && movR){
-            cameraX += u.x * delta_t * speed;
-        } else if(!colRZ && movR){
+        }
+        if(!colRZ && movR){
             cameraZ += u.z * delta_t * speed;
         }
-        if(!colLX && !colLZ && movL){
+
+        if(!colLX && movL){
             cameraX += -u.x * delta_t * speed;
-            cameraZ += -u.z * delta_t * speed;
-        } else if(!colLX && movL){
-            cameraX += -u.x * delta_t * speed;
-        } else if(!colLZ && movL){
+        }
+        if(!colLZ && movL){
             cameraZ += -u.z * delta_t * speed;
         }
 

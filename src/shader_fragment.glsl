@@ -127,9 +127,14 @@ void main()
     }
     else if ( object_id == PLANE )
     {
-        // PREENCHA AQUI
-        // Propriedades espectrais do plano
-        Kd = vec3(0.2,0.2,0.2);
+        float x = position_model.x * 5;
+        float y = position_model.z * 5;
+
+
+        U = x - floor(x);
+        V = y - floor(y);
+
+        Kd = texture(TextureImage0, vec2(U,V)).rgb;
         Ks = vec3(0.3,0.3,0.3);
         Ka = vec3(0.0,0.0,0.0);
         q = 20.0;
