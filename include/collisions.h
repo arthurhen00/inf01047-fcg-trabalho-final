@@ -14,10 +14,12 @@ bool isBoundingBoxIntersection(SceneObject& ob1, SceneObject& ob2) {
     bool yAxis = cur_bbox_min1.y <= cur_bbox_max2.y && cur_bbox_max1.y >= cur_bbox_min2.y;
     bool zAxis = cur_bbox_min1.z <= cur_bbox_max2.z && cur_bbox_max1.z >= cur_bbox_min2.z;
 
-    //printf("MAX:(%.4f)(%.4f)(%.4f)", cur_bbox_max1.x,cur_bbox_max1.y,cur_bbox_max1.z);
-    //printf("MIN:(%.4f)(%.4f)(%.4f)|", cur_bbox_min2.x,cur_bbox_min2.y,cur_bbox_min2.z);
-    //std::cout << ob2.name;
-    //printf("  |%d\n", yAxis && xAxis && zAxis);
+    //std::cout<<ob2.name<<std::endl;
+    //printf("MIN1:(%.4f)(%.4f)(%.4f)\n", cur_bbox_min1.x,cur_bbox_min1.y,cur_bbox_min1.z);
+    //printf("MAX1:(%.4f)(%.4f)(%.4f)\n", cur_bbox_max1.x,cur_bbox_max1.y,cur_bbox_max1.z);
+    //printf("MIN2:(%.4f)(%.4f)(%.4f)\n", cur_bbox_min2.x,cur_bbox_min2.y,cur_bbox_min2.z);
+    //printf("MAX2:(%.4f)(%.4f)(%.4f)\n", cur_bbox_max2.x,cur_bbox_max2.y,cur_bbox_max2.z);
+    //printf("|%d\n", yAxis && xAxis && zAxis);
 
     return yAxis && xAxis && zAxis;
 }

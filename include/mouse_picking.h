@@ -135,7 +135,12 @@ SceneObject GetInteractableObject(std::vector<SceneObject>& virtual_scene ,glm::
 
         float distance;
 
-        if(obj.inspectable && TestRayOBBIntersection(camera_position_c,camera_view_vector,obj.bbox_min,obj.bbox_max,obj.model,distance)){
+        if(obj.inspectable && TestRayOBBIntersection(camera_position_c,
+                                                     camera_view_vector,
+                                                     obj.bbox_min,
+                                                     obj.bbox_max,
+                                                     obj.model,
+                                                     distance)){
            if(distance < minDistance){
                 minDistance = distance;
                 if(minDistance < 1){
