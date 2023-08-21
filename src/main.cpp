@@ -390,12 +390,79 @@ int main(int argc, char* argv[])
         glm::vec4 camera_view_vector;
         glm::vec4 camera_view_vector_mov = -glm::vec4(x, 0.0f, z, 0.0f);
 
+        float current_time = (float)glfwGetTime();
+        float delta_t = current_time - prev_time;
+        prev_time = current_time;
+
+        glm::vec3 direction_anim = glm::vec3(0,0,0);
+
         if(is_inspecting && interactable_object.name != "NULL"){
             glm::vec4 bbox_center = interactable_object.get_bbox_center();
             glm::vec4 vec = glm::normalize(glm::vec4(0.0f,0.0f,1.0f,0.0f)) * g_CameraDistance;
             camera_position_c  = bbox_center + vec;
             camera_view_vector = bbox_center - camera_position_c;
-        } else if(!fstAnim){
+        } else if(fstAnim){
+            /* Animação inicial */
+            float delta_t_anim = current_time - prev_time_anim;
+            prev_time_anim = current_time;
+
+            glm::vec3 ponto1 = glm::vec3( 7.5f, 1.0f, -1.0f);
+            glm::vec3 ponto2 = glm::vec3( 5.5f, 1.0f,  2.0f);
+            glm::vec3 ponto3 = glm::vec3( 2.5f, 3.0f, -1.0f);
+            glm::vec3 ponto4 = glm::vec3(-3.5f, 4.0f, -1.5f);
+            glm::vec3 ponto5 = glm::vec3(-3.5f, 2.0f,  3.0f);
+            glm::vec3 ponto6 = glm::vec3(-3.5f, 1.0f, -1.5f);
+            glm::vec3 p_saida = calculateBezierPoint({ponto1, ponto2, ponto3, ponto4, ponto5, ponto6}, t_bezier);
+
+            glm::vec3 vponto1 = glm::vec3( 5.5f, 1.0f, -1.0f);
+            glm::vec3 vponto2 = glm::vec3( 5.5f, 0.0f,  2.0f);
+            glm::vec3 vponto3 = glm::vec3( 2.5f, 0.0f, -1.0f);
+            glm::vec3 vponto4 = glm::vec3(-3.5f, 0.0f, -1.5f);
+            glm::vec3 vponto5 = glm::vec3(-3.5f, 0.0f,  3.0f);
+            glm::vec3 vponto6 = glm::vec3(-4.5f, 0.0f, -6.5f);
+            direction_anim = calculateBezierPoint({vponto1, vponto2, vponto3, vponto4, vponto5, vponto6}, t_bezier2);
+
+            cameraX = p_saida.x;
+            cameraY = p_saida.y;
+            cameraZ = p_saida.z;
+
+            camera_view_vector = glm::vec4(direction_anim.x, direction_anim.y, direction_anim.z, 1.0f)
+                               - player.get_bbox_center();
+
+            if(t_bezier <= 1.0f){
+                if(t_bezier < 0.2f){
+                    t_bezier += 0.0001f * delta_t_anim * anim_speed;
+                }else if(t_bezier > 0.7f){
+                    t_bezier += 0.00002f * delta_t_anim * anim_speed;
+                } else if(t_bezier > 0.9f){
+                    t_bezier += 0.00001f * delta_t_anim * anim_speed;
+                } else {
+                    t_bezier += 0.0001f * delta_t_anim * anim_speed;
+                }
+            }
+            if(t_bezier2 <= 1.0f){
+                    if(t_bezier2 > 0.8f){
+                        t_bezier2 += 0.00003f * delta_t_anim * anim_speed;
+                    } else {
+                        t_bezier2 += 0.00015f * delta_t_anim * anim_speed;
+                    }
+            }
+
+            if(t_bezier >= 1.0f){
+                static float initial_t = (float)glfwGetTime();
+                float t = (float)glfwGetTime();
+                float past_t = t - initial_t;
+                total_t += past_t;
+                initial_t = t;
+                if(total_t > 2.0f){
+                    fstAnim = false;
+                    cameraX = 7.5f;;
+                    cameraY = 1.0f;
+                    cameraZ = -1.0f;
+                    camera_view_vector = -glm::vec4(x, y, z, 0.0f);
+                }
+            }
+        } else {
             camera_view_vector = -glm::vec4(x, y, z, 0.0f);
         }
 
@@ -419,11 +486,6 @@ int main(int argc, char* argv[])
         /* Att posicao de camera */
         glm::vec4 w = -camera_view_vector_mov/norm(camera_view_vector_mov);
         glm::vec4 u = crossproduct(camera_up_vector, w)/norm(crossproduct(camera_up_vector, w)); /*camera_up_vector * w;*/
-
-        // Atualiza delta de tempo
-        float current_time = (float)glfwGetTime();
-        float delta_t = current_time - prev_time;
-        prev_time = current_time;
 
         bool colFX = false;
         bool colFZ = false;
@@ -572,70 +634,6 @@ int main(int argc, char* argv[])
         // efetivamente aplicadas em todos os pontos.
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
-        glm::vec3 direction_anim;
-        /* fst anim */
-        if(fstAnim){
-            float delta_t_anim = current_time - prev_time_anim;
-            prev_time_anim = current_time;
-
-            glm::vec3 ponto1 = glm::vec3( 7.5f, 1.0f, -1.0f);
-            glm::vec3 ponto2 = glm::vec3( 5.5f, 1.0f,  2.0f);
-            glm::vec3 ponto3 = glm::vec3( 2.5f, 3.0f, -1.0f);
-            glm::vec3 ponto4 = glm::vec3(-3.5f, 4.0f, -1.5f);
-            glm::vec3 ponto5 = glm::vec3(-3.5f, 2.0f,  3.0f);
-            glm::vec3 ponto6 = glm::vec3(-3.5f, 1.0f, -1.5f);
-            glm::vec3 p_saida = calculateBezierPoint({ponto1, ponto2, ponto3, ponto4, ponto5, ponto6}, t_bezier);
-
-            glm::vec3 vponto1 = glm::vec3( 5.5f, 1.0f, -1.0f);
-            glm::vec3 vponto2 = glm::vec3( 5.5f, 0.0f,  2.0f);
-            glm::vec3 vponto3 = glm::vec3( 2.5f, 0.0f, -1.0f);
-            glm::vec3 vponto4 = glm::vec3(-3.5f, 0.0f, -1.5f);
-            glm::vec3 vponto5 = glm::vec3(-3.5f, 0.0f,  3.0f);
-            glm::vec3 vponto6 = glm::vec3(-4.5f, 0.0f, -6.5f);
-            direction_anim = calculateBezierPoint({vponto1, vponto2, vponto3, vponto4, vponto5, vponto6}, t_bezier2);
-
-            cameraX = p_saida.x;
-            cameraY = p_saida.y;
-            cameraZ = p_saida.z;
-
-            camera_view_vector = glm::vec4(direction_anim.x, direction_anim.y, direction_anim.z, 1.0f)
-                               - player.get_bbox_center();
-
-            if(t_bezier <= 1.0f){
-                if(t_bezier < 0.2f){
-                    t_bezier += 0.0001f * delta_t_anim * anim_speed;
-                }else if(t_bezier > 0.7f){
-                    t_bezier += 0.00002f * delta_t_anim * anim_speed;
-                } else if(t_bezier > 0.9f){
-                    t_bezier += 0.00001f * delta_t_anim * anim_speed;
-                } else {
-                    t_bezier += 0.0001f * delta_t_anim * anim_speed;
-                }
-            }
-            if(t_bezier2 <= 1.0f){
-                    if(t_bezier2 > 0.8f){
-                        t_bezier2 += 0.00003f * delta_t_anim * anim_speed;
-                    } else {
-                        t_bezier2 += 0.00015f * delta_t_anim * anim_speed;
-                    }
-            }
-
-
-            if(t_bezier >= 1.0f){
-                static float initial_t = (float)glfwGetTime();
-                float t = (float)glfwGetTime();
-                float past_t = t - initial_t;
-                total_t += past_t;
-                initial_t = t;
-                if(total_t > 2.0f){
-                    fstAnim = false;
-                    cameraX = 7.5f;;
-                    cameraY = 1.0f;
-                    cameraZ = -1.0f;
-                    camera_view_vector = -glm::vec4(x, y, z, 0.0f);
-                }
-            }
-        }
 
         #define SPHERE      0
         #define BUNNY       1
@@ -666,8 +664,8 @@ int main(int argc, char* argv[])
             DrawVirtualObject("the_plane");
 
             // Parede 1
-            model = Matrix_Translate(0.0f,1.0f,-8.0f);
-            //* Matrix_Scale(8.0f, 4.0f, 0.5f);
+            model = Matrix_Translate(0.0f,1.0f,-8.0f)
+            * Matrix_Scale(8.0f, 4.0f, 0.5f);
             wall1.model = model;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, WALL_1);
@@ -1327,7 +1325,7 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         if(is_inspecting){
             g_AngleX += 0.002*dx;
             g_AngleY += 0.002*dy;
-        }else{
+        }else if(!fstAnim){
             // Atualizamos parâmetros da câmera com os deslocamentos
             g_CameraTheta -= 0.01f*dx;
             g_CameraPhi   += 0.01f*dy;

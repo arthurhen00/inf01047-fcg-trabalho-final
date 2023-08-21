@@ -80,6 +80,8 @@ void main()
     // Vetor que define o sentido da reflexão especular ideal.
     vec4 r = -l + 2 * n * dot(n, l); // PREENCHA AQUI o vetor de reflexão especular ideal
 
+    vec4 h = normalize(v + l);
+
     float U = 0.0;
     float V = 0.0;
 
@@ -133,7 +135,7 @@ void main()
         V = position_model.z * vR - floor(position_model.z * vR);
 
         Kd = texture(TextureImage3, vec2(U,V)).rgb * texture(TextureImage4, vec2(U,V)).rgb;
-        Ks = vec3(0,0,0);
+        Ks = vec3(0.1,0.1,0.1);
         Ka = vec3(0.0,0.0,0.0);
         q = 20.0;
     } else if (object_id == WALL_1){
@@ -205,6 +207,7 @@ void main()
 
     // Termo especular utilizando o modelo de iluminação de Phong
     vec3 phong_specular_term  = Ks * I * pow(max(0, dot(r, v)), q); // PREENCH AQUI o termo especular de Phong
+    vec3 bling_phong_specular_term  = Ks * I * pow(max(0, dot(n, h)), q);
 
     // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
     // necessário:
