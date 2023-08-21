@@ -72,7 +72,7 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(vec4(1.0,1.0,0.5,0.0));
+    vec4 l = normalize(vec4(-1.0, 2.5, 0.5, 0.0) - vec4(1.0, 2.0, 0.5, 0.0));
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
@@ -136,7 +136,7 @@ void main()
 
         Kd = texture(TextureImage3, vec2(U,V)).rgb * texture(TextureImage4, vec2(U,V)).rgb;
         Ks = vec3(0.1,0.1,0.1);
-        Ka = vec3(0.0,0.0,0.0);
+        Ka = Kd/2;
         q = 20.0;
     } else if (object_id == WALL_1){
         float uR = 1.9;
@@ -165,7 +165,7 @@ void main()
         V = texcoords.y;
 
         Kd= texture(TextureImage7, vec2(U,V)).rgb;
-        Ks= vec3(0.1,0.1,0.1);
+        Ks= vec3(0.04,0.04,0.04);
         Ka= Kd/8;
         q = 2.0;
     } else if(object_id == CHESS){

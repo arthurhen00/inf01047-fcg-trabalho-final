@@ -322,6 +322,7 @@ int main(int argc, char* argv[])
     SceneObject chess = g_VirtualScene.at("Bauhaus_Schach Schachbrett");
     chess.inspectable = false;
 
+    SceneObject esfera = g_VirtualScene.at("the_sphere");
 
     SceneObject coelho = g_VirtualScene.at("the_bunny");
     SceneObject cam_dir = g_VirtualScene.at("the_sphere");
@@ -503,7 +504,7 @@ int main(int argc, char* argv[])
         bool colLZ = false;
         bool movL = false;
 
-        std::vector<SceneObject> objectsGroup = {room_floor, wall1, wall2, table, coelho, chess};
+        std::vector<SceneObject> objectsGroup = {room_floor, wall1, wall2, table, coelho, chess, esfera};
         for(int i = 0; i < objectsGroup.size(); i++){
             if(objectsGroup[i].hasCollision && !fstAnim){
                 float nextX = cameraX;
@@ -651,10 +652,10 @@ int main(int argc, char* argv[])
             glUniform1i(g_object_id_uniform, SPHERE);
             DrawVirtualObject("the_sphere");
 
-            coelho.translate(direction_anim.x, direction_anim.y, direction_anim.z);
+            /*coelho.translate(direction_anim.x, direction_anim.y, direction_anim.z);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(coelho.model));
             glUniform1i(g_object_id_uniform, SPHERE);
-            DrawVirtualObject("the_bunny");
+            DrawVirtualObject("the_bunny");*/
 
             // Chão principal
             room_floor.translate(0.0f, -1.0f, 0.0f);
@@ -689,17 +690,33 @@ int main(int argc, char* argv[])
             // Coelho
             model = Matrix_Translate(3.0f,0.0f,3.0f);
             coelho.model = model;
+            coelho.obj_index = SPHERE;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, BUNNY);
+            glUniform1i(g_object_id_uniform, SPHERE);
             DrawVirtualObject("the_bunny");
 
-            // Tabuleiro xadre
-            chess.translate(-1.6f, -0.3f,-3.9f);
+            // Tabuleiro xadrez
+            chess.translate(-3.8f, -0.3f,-3.9f);
             chess.scale(0.03f, 0.03f, 0.03f);
             chess.obj_index = CHESS;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(chess.model));
             glUniform1i(g_object_id_uniform, CHESS);
             DrawVirtualObject("Bauhaus_Schach Schachbrett");
+
+            /* Pontos de iluminacao */
+            // PT 1
+            esfera.translate(0,0,0);
+            esfera.obj_index = SPHERE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(esfera.model));
+            glUniform1i(g_object_id_uniform, SPHERE);
+            DrawVirtualObject("the_sphere");
+
+            // PT 2
+            esfera.translate(-2,0,0);
+            esfera.obj_index = SPHERE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(esfera.model));
+            glUniform1i(g_object_id_uniform, SPHERE);
+            DrawVirtualObject("the_sphere");
         }
 
         if(is_inspecting && interactable_object.name != "NULL"){
