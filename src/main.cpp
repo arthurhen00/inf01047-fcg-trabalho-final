@@ -52,11 +52,11 @@
 // Headers locais, definidos na pasta "include/"
 #include "utils.h"
 #include "matrices.h"
-
+#include "glm/gtx/string_cast.hpp"
 #include "collisions.h"
 
 
-#include "glm/gtx/string_cast.hpp"
+
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 
@@ -288,6 +288,7 @@ int main(int argc, char* argv[])
 
     /* Criacao de objetos */
     SceneObject chao = g_VirtualScene.at("the_plane");
+    chao.name = "chao";
 
     SceneObject player = g_VirtualScene.at("the_sphere");
 
@@ -296,7 +297,7 @@ int main(int argc, char* argv[])
     SceneObject coelho = g_VirtualScene.at("the_bunny");
 
     SceneObject parede1 = g_VirtualScene.at("box.jpg");
-
+    parede1.name = "parede1";
     SceneObject parede2 = g_VirtualScene.at("box.jpg");
 
 
@@ -562,10 +563,13 @@ int main(int argc, char* argv[])
         #define BOX    3
         #define SKYBOX 4
 
+        glm::vec4 ponto1 = glm::vec4(-19.902033, 0.913199, 1.361143, 1.000000);
+        glm::vec4 ponto2 = glm::vec4(-21.750000, 0.395814, -0.781245, 1.000000);
+        //std::cout << glm::to_string(glm::lessThan(ponto1,ponto2));
         if(!is_inspecting){
             // Desenhamos o modelo da esfera
             /* Usando a esfeca como modelo de colisao para o personagem*/
-            model = Matrix_Translate(cameraX,cameraY,cameraZ);
+            model = Matrix_Translate(cameraX,cameraY,cameraZ)*Matrix_Scale(0.2,1,0.2);
             player.model = model;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, SPHERE);
@@ -587,7 +591,7 @@ int main(int argc, char* argv[])
 
 
             //Desenhamos o modelo da caixa
-            model = Matrix_Translate(3.50f,-0.28f,0.0f);
+            model = Matrix_Rotate_Y(3.14159265359) * Matrix_Translate(20.50f,-0.28f,0.0f) * Matrix_Rotate_Y(3.14159265359/2);
             parede1.model = model;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, BOX);

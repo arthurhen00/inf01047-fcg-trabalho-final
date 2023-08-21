@@ -73,11 +73,17 @@ struct SceneObject
     bool         hasCollision = true;
 
     glm::vec4 get_bbox_min(){
-        return model * bbox_min;
+        glm::vec4 bbox_max_global = model * bbox_min;
+        glm::vec4 bbox_min_global = model * bbox_max;
+
+        return glm::min(bbox_min_global,bbox_max_global);
     }
 
     glm::vec4 get_bbox_max(){
-        return model * bbox_max;
+        glm::vec4 bbox_max_global = model * bbox_min;
+        glm::vec4 bbox_min_global = model * bbox_max;
+
+        return glm::max(bbox_min_global,bbox_max_global);
     }
 
     glm::vec4 get_bbox_center(){
