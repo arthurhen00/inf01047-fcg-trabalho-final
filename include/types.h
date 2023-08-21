@@ -1,3 +1,4 @@
+#include "matrices.h"
 
 struct ObjModel
 {
@@ -67,12 +68,12 @@ struct SceneObject
     GLuint       vertex_array_object_id; // ID do VAO onde estão armazenados os atributos do modelo
     glm::vec4    bbox_min; // Axis-Aligned Bounding Box do objeto
     glm::vec4    bbox_max;
-    glm::mat4    model;
+    glm::mat4    model = Matrix_Identity();
     int          obj_index;
     bool         inspectable = true;
     bool         hasCollision = true;
 
-    glm::vec4 get_bbox_min(){
+        glm::vec4 get_bbox_min(){
         glm::vec4 bbox_max_global = model * bbox_min;
         glm::vec4 bbox_min_global = model * bbox_max;
 
@@ -92,5 +93,23 @@ struct SceneObject
                                     (bbox_max.z + bbox_min.z)/2,
                                      1.0f
                                      ) ;
+    }
+
+    void translate(float x, float y, float z){
+        model = Matrix_Translate(x, y, z);
+    }
+    void scale(float x, float y, float z){
+        model = Matrix_Translate(get_bbox_center().x,
+                                 get_bbox_center().y,
+                                 get_bbox_center().z)
+              * Matrix_Scale(x, y, z);
+    }
+    void mRotate(float x, float y, float z){
+        model = Matrix_Translate(get_bbox_center().x,
+                                 get_bbox_center().y,
+                                 get_bbox_center().z)
+              * Matrix_Rotate_X(x)
+              * Matrix_Rotate_Y(y)
+              * Matrix_Rotate_Z(z);
     }
 };

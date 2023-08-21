@@ -13,17 +13,22 @@ in vec4 position_model;
 // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
 in vec2 texcoords;
 
+in vec4 color_v;
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
 // Identificador que define qual objeto está sendo desenhado no momento
-#define SPHERE 0
-#define BUNNY  1
-#define PLANE  2
-#define BOX    3
-#define SKYBOX 4
+#define SPHERE      0
+#define BUNNY       1
+#define ROOM_FLOOR  2
+#define WALL_1      3
+#define SKYBOX      4
+#define WALL_1_SIDE 5
+#define TABLE       6
+#define CHESS       7
+#define BOWL        8
 
 uniform int object_id;
 
@@ -35,6 +40,13 @@ uniform vec4 bbox_max;
 uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
 uniform sampler2D TextureImage2;
+uniform sampler2D TextureImage3;
+uniform sampler2D TextureImage4;
+uniform sampler2D TextureImage5;
+uniform sampler2D TextureImage6;
+uniform sampler2D TextureImage7;
+uniform sampler2D TextureImage8;
+uniform sampler2D TextureImage9;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -63,13 +75,18 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(vec4(1.0,1.0,0.5,0.0));
+    vec4 l = normalize(vec4(0.0f,5.0f,0.0f, 0.0f) - vec4(-1.0f,4.0f,0.0f, 0.0f));
+    vec4 l1 = normalize(vec4(0.0f,5.0f,0.0f, 0.0f) - vec4(1.0f,4.0f,0.0f, 0.0f));
+
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
 
     // Vetor que define o sentido da reflexão especular ideal.
     vec4 r = -l + 2 * n * dot(n, l); // PREENCHA AQUI o vetor de reflexão especular ideal
+    vec4 r1 = -l1 + 2 * n * dot(n, l1);
+
+    vec4 h = normalize(v + l);
 
     float U = 0.0;
     float V = 0.0;
@@ -81,8 +98,7 @@ void main()
     vec3 Ka; // Refletância ambiente
     float q; // Expoente especular para o modelo de iluminação de Phong
 
-    if ( object_id == SPHERE )
-    {
+    if ( object_id == SPHERE ){
 
         vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
         vec4 pl = bbox_center + (position_model - bbox_center)/length((position_model - bbox_center));
@@ -100,12 +116,7 @@ void main()
         Ks = vec3(0.0,0.0,0.0);
         Ka = Kd/2;
         q = 1.0;
-    }
-    else if ( object_id == BUNNY )
-    {
-        // PREENCHA AQUI
-        // Propriedades espectrais do coelho
-
+    } else if ( object_id == BUNNY ){
         float minx = bbox_min.x;
         float maxx = bbox_max.x;
 
@@ -122,39 +133,54 @@ void main()
         Ks = vec3(0.8,0.8,0.8);
         Ka = Kd/2;
         q = 32.0;
+    } else if ( object_id == ROOM_FLOOR ){
+        float uR = 2;
+        float vR = 1.5;
 
+        U = position_model.x * uR - floor(position_model.x * uR);
+        V = position_model.z * vR - floor(position_model.z * vR);
 
-    }
-    else if ( object_id == PLANE )
-    {
-        float x = position_model.x * 5;
-        float y = position_model.z * 5;
-
-
-        U = x - floor(x);
-        V = y - floor(y);
-
-        Kd = texture(TextureImage0, vec2(U,V)).rgb;
-        Ks = vec3(0.3,0.3,0.3);
-        Ka = vec3(0.0,0.0,0.0);
+        Kd = texture(TextureImage3, vec2(U,V)).rgb * texture(TextureImage4, vec2(U,V)).rgb;
+        Ks = vec3(0.0,0.0,0.0);
+        Ka = Kd/2;
         q = 20.0;
-    }
-    else if (object_id == BOX){
+    } else if (object_id == WALL_1){
+        float uR = 1.9;
+        float vR = 1;
 
-        U = texcoords.x;
-        V = texcoords.y;
+        U = position_model.x * uR - floor(position_model.x * uR);
+        V = position_model.y * vR - floor(position_model.y * vR);
 
-        Kd= texture(TextureImage2, vec2(U,V)).rgb;
+        Kd= texture(TextureImage5, vec2(U,V)).rgb * texture(TextureImage6, vec2(U,V)).rgb;
         Ks= vec3(0.0,0.0,0.0);
         Ka= Kd/2;
         q = 2.0;
-    }else if (object_id == SKYBOX){
+    } else if (object_id == TABLE){
+        U = texcoords.x;
+        V = texcoords.y;
+
+        Kd= texture(TextureImage7, vec2(U,V)).rgb;
+        Ks= vec3(0.04,0.04,0.04);
+        Ka= Kd/8;
+        q = 2.0;
+    } else if(object_id == CHESS){
+        float uR = 0.11;
+        float vR = 0.11;
+
+        U = position_model.x * uR - floor(position_model.x * uR);
+        V = position_model.z * vR - floor(position_model.z * vR);
+
+        Kd= texture(TextureImage8, vec2(U,V)).rgb;
+        Ks= vec3(0.1,0.1,0.1);
+        Ka= Kd/8;
+        q = 2.0;
+    } else if (object_id == SKYBOX){
         Kd = vec3(0.0,0.0,0.0);
         Ks = vec3(0.0,0.0,0.0);
         Ka = vec3(0.0,0.0,0.0);
         q = 32.0;
-    }else // Objeto desconhecido = preto
-    {
+
+    } else{
         Kd = vec3(0.0,0.0,0.0);
         Ks = vec3(0.0,0.0,0.0);
         Ka = vec3(0.0,0.0,0.0);
@@ -177,6 +203,7 @@ void main()
 
     // Termo especular utilizando o modelo de iluminação de Phong
     vec3 phong_specular_term  = Ks * I * pow(max(0, dot(r, v)), q); // PREENCH AQUI o termo especular de Phong
+    vec3 bling_phong_specular_term  = Ks * I * pow(max(0, dot(n, h)), q);
 
     // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
     // necessário:
@@ -201,5 +228,10 @@ void main()
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
     color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
+
+
+    if(object_id == BOWL){
+        color = color_v;
+    }
 }
 

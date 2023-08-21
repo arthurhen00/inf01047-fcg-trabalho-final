@@ -46,20 +46,22 @@
 #include <stb_image.h>
 
 #include "types.h"
+#include "collisions.h"
 #include "mouse_picking.h"
 
 
 // Headers locais, definidos na pasta "include/"
 #include "utils.h"
 #include "matrices.h"
+
+
+
 #include "glm/gtx/string_cast.hpp"
-#include "collisions.h"
-
-
-
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 
+#define PI  3.14159265359
+#define PI2 1.57079632679
 
 // Declaração de funções utilizadas para pilha de matrizes de modelagem.
 void PushMatrix(glm::mat4 M);
@@ -171,15 +173,17 @@ GLint g_bbox_max_uniform;
 SceneObject interactable_object;
 bool is_inspecting = false;
 // Variaveis da free cam
-float cameraX = -1.0f;
-float cameraY = 6.0f;
-float cameraZ = 6.0f;
+float cameraX = 7.5f;
+float cameraY = 1.0f;
+float cameraZ = -1.0f;
 bool movingForward  = false;
 bool movingBackward = false;
 bool movingLeft     = false;
 bool movingRight    = false;
 bool movingUp       = false;
 bool movingDown     = false;
+bool running        = false;
+bool fstAnim        = false;
 
 glm::vec3 calculateBezierPoint(const std::vector<glm::vec3>& controlPoints, float t);
 
@@ -260,23 +264,28 @@ int main(int argc, char* argv[])
 
     LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");      // TextureImage0
     LoadTextureImage("../../data/tc-earth_nightmap_citylights.gif"); // TextureImage1
-    LoadTextureImage("../../data/box/texture.jpg"); // TextureImage2
-
+    LoadTextureImage("../../data/box/texture.jpg");                  // TextureImage2
+    LoadTextureImage("../../data/texture/floor/dark_wooden_planks_diff_1k.jpg"); // TextureImage3
+    LoadTextureImage("../../data/texture/floor/dark_wooden_planks_disp_1k.png"); // TextureImage4
+    LoadTextureImage("../../data/texture/wall_1/wood_trunk_wall_diff_1k.jpg");   // TextureImage5
+    LoadTextureImage("../../data/texture/wall_1/wood_trunk_wall_disp_1k.png");   // TextureImage6
+    LoadTextureImage("../../data/table/texture.jpg");                            // TextureImage7
+    LoadTextureImage("../../data/chess/GMS00103.jpg");                           // TextureImage8
+    LoadTextureImage("../../data/bowl/Light_Oak.jpg");                           // TextureImage9
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
 
-    ObjModel spheremodel("../../data/sphere.obj");
-    ComputeNormals(&spheremodel);
-    BuildTrianglesAndAddToVirtualScene(&spheremodel);
+    ObjModel plane_model("../../data/plane.obj");
+    ComputeNormals(&plane_model);
+    BuildTrianglesAndAddToVirtualScene(&plane_model);
 
-    ObjModel bunnymodel("../../data/bunny.obj");
-    ComputeNormals(&bunnymodel);
-    BuildTrianglesAndAddToVirtualScene(&bunnymodel);
+    ObjModel sphere_model("../../data/sphere.obj");
+    ComputeNormals(&sphere_model);
+    BuildTrianglesAndAddToVirtualScene(&sphere_model);
 
-    ObjModel planemodel("../../data/plane.obj");
-    ComputeNormals(&planemodel);
-    BuildTrianglesAndAddToVirtualScene(&planemodel);
-    g_VirtualScene.at("the_plane").hasCollision = false;
+    ObjModel bunny_model("../../data/bunny.obj");
+    ComputeNormals(&bunny_model);
+    BuildTrianglesAndAddToVirtualScene(&bunny_model);
 
     ObjModel boxmodel("../../data/box/box.obj");
     ComputeNormals(&boxmodel);
@@ -286,20 +295,46 @@ int main(int argc, char* argv[])
     ComputeNormals(&skyboxmodel);
     BuildTrianglesAndAddToVirtualScene(&skyboxmodel);
 
-    /* Criacao de objetos */
-    SceneObject chao = g_VirtualScene.at("the_plane");
-    chao.name = "chao";
+    ObjModel table_model("../../data/table/table.obj");
+    ComputeNormals(&table_model);
+    BuildTrianglesAndAddToVirtualScene(&table_model);
 
+    ObjModel chess_model("../../data/chess/chess2.obj");
+    ComputeNormals(&chess_model);
+    BuildTrianglesAndAddToVirtualScene(&chess_model);
+
+    ObjModel bowl_model("../../data/bowl/bowl.obj");
+    ComputeNormals(&bowl_model);
+    BuildTrianglesAndAddToVirtualScene(&bowl_model);
+
+    /* Criacao de objetos */
     SceneObject player = g_VirtualScene.at("the_sphere");
+    player.inspectable = false;
+
+    SceneObject room_floor = g_VirtualScene.at("the_plane");
+    room_floor.hasCollision = false;
+    room_floor.inspectable = false;
+
+    SceneObject wall1 = g_VirtualScene.at("box.jpg");
+    wall1.inspectable = false;
+    SceneObject wall2 = g_VirtualScene.at("box.jpg");
+    wall2.inspectable = false;
+    SceneObject wall3 = g_VirtualScene.at("box.jpg");
+    wall3.inspectable = false;
+    SceneObject wall4 = g_VirtualScene.at("box.jpg");
+    wall4.inspectable = false;
+
+    SceneObject table = g_VirtualScene.at("the_table");
+    table.inspectable = true;
+
+    SceneObject chess = g_VirtualScene.at("Bauhaus_Schach Schachbrett");
 
     SceneObject esfera = g_VirtualScene.at("the_sphere");
 
     SceneObject coelho = g_VirtualScene.at("the_bunny");
+    SceneObject cam_dir = g_VirtualScene.at("the_sphere");
 
-    SceneObject parede1 = g_VirtualScene.at("box.jpg");
-    parede1.name = "parede1";
-    SceneObject parede2 = g_VirtualScene.at("box.jpg");
-
+    SceneObject bowl = g_VirtualScene.at("10315_soup_plate");
 
     if ( argc > 1 )
     {
@@ -320,15 +355,16 @@ int main(int argc, char* argv[])
 
     float speed = 5.0f; // Velocidade da câmera
     float prev_time = (float)glfwGetTime();
+    float prev_time_anim = (float)glfwGetTime();
 
+    float anim_speed = 2000;
     float t_bezier = 0.0f;
-    bool reverseDirection = false;
+    float t_bezier2 = 0.0f;
+    float total_t = 0;
 
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
-
-
         // Aqui executamos as operações de renderização
 
         // Definimos a cor do "fundo" do framebuffer como branco.  Tal cor é
@@ -364,17 +400,87 @@ int main(int argc, char* argv[])
         glm::vec4 camera_view_vector;
         glm::vec4 camera_view_vector_mov = -glm::vec4(x, 0.0f, z, 0.0f);
 
+        float current_time = (float)glfwGetTime();
+        float delta_t = current_time - prev_time;
+        prev_time = current_time;
+
+        glm::vec3 direction_anim = glm::vec3(0,0,0);
+
         if(is_inspecting && interactable_object.name != "NULL"){
             glm::vec4 bbox_center = interactable_object.get_bbox_center();
             glm::vec4 vec = glm::normalize(glm::vec4(0.0f,0.0f,1.0f,0.0f)) * g_CameraDistance;
             camera_position_c  = bbox_center + vec;
-            // Ponto "l", para onde a câmera (look-at) estará sempre olhando
             camera_view_vector = bbox_center - camera_position_c;
+        } else if(fstAnim){
+            /* Animação inicial */
+            float delta_t_anim = current_time - prev_time_anim;
+            prev_time_anim = current_time;
 
-        }else
+            glm::vec3 ponto1 = glm::vec3( 7.5f, 1.0f, -1.0f);
+            glm::vec3 ponto2 = glm::vec3( 5.5f, 1.0f,  2.0f);
+            glm::vec3 ponto3 = glm::vec3( 2.5f, 3.0f, -1.0f);
+            glm::vec3 ponto4 = glm::vec3(-3.5f, 4.0f, -1.5f);
+            glm::vec3 ponto5 = glm::vec3(-3.5f, 2.0f,  3.0f);
+            glm::vec3 ponto6 = glm::vec3(-3.5f, 1.0f, -1.5f);
+            glm::vec3 p_saida = calculateBezierPoint({ponto1, ponto2, ponto3, ponto4, ponto5, ponto6}, t_bezier);
+
+            glm::vec3 vponto1 = glm::vec3( 5.5f, 1.0f, -1.0f);
+            glm::vec3 vponto2 = glm::vec3( 5.5f, 0.0f,  2.0f);
+            glm::vec3 vponto3 = glm::vec3( 2.5f, 0.0f, -1.0f);
+            glm::vec3 vponto4 = glm::vec3(-3.5f, 0.0f, -1.5f);
+            glm::vec3 vponto5 = glm::vec3(-3.5f, 0.0f,  3.0f);
+            glm::vec3 vponto6 = glm::vec3(-4.5f, 0.0f, -6.5f);
+            direction_anim = calculateBezierPoint({vponto1, vponto2, vponto3, vponto4, vponto5, vponto6}, t_bezier2);
+
+            cameraX = p_saida.x;
+            cameraY = p_saida.y;
+            cameraZ = p_saida.z;
+
+            camera_view_vector = glm::vec4(direction_anim.x, direction_anim.y, direction_anim.z, 1.0f)
+                               - player.get_bbox_center();
+
+            if(t_bezier <= 1.0f){
+                if(t_bezier < 0.2f){
+                    t_bezier += 0.0001f * delta_t_anim * anim_speed;
+                }else if(t_bezier > 0.7f){
+                    t_bezier += 0.00002f * delta_t_anim * anim_speed;
+                } else if(t_bezier > 0.9f){
+                    t_bezier += 0.00001f * delta_t_anim * anim_speed;
+                } else {
+                    t_bezier += 0.0001f * delta_t_anim * anim_speed;
+                }
+            }
+            if(t_bezier2 <= 1.0f){
+                    if(t_bezier2 > 0.8f){
+                        t_bezier2 += 0.00003f * delta_t_anim * anim_speed;
+                    } else {
+                        t_bezier2 += 0.00015f * delta_t_anim * anim_speed;
+                    }
+            }
+
+            if(t_bezier >= 1.0f){
+                static float initial_t = (float)glfwGetTime();
+                float t = (float)glfwGetTime();
+                float past_t = t - initial_t;
+                total_t += past_t;
+                initial_t = t;
+                if(total_t > 2.0f){
+                    fstAnim = false;
+                    cameraX = 7.5f;;
+                    cameraY = 1.0f;
+                    cameraZ = -1.0f;
+                    camera_view_vector = -glm::vec4(x, y, z, 0.0f);
+                }
+            }
+        } else {
             camera_view_vector = -glm::vec4(x, y, z, 0.0f);
+        }
 
-
+        if(running){
+            speed = 10.0f;
+        } else {
+            speed = 5.0f;
+        }
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -387,15 +493,9 @@ int main(int argc, char* argv[])
         float nearplane = -0.1f;  // Posição do "near plane"
         float farplane  = -50.0f; // Posição do "far plane"
 
-
         /* Att posicao de camera */
         glm::vec4 w = -camera_view_vector_mov/norm(camera_view_vector_mov);
         glm::vec4 u = crossproduct(camera_up_vector, w)/norm(crossproduct(camera_up_vector, w)); /*camera_up_vector * w;*/
-
-        // Atualiza delta de tempo
-        float current_time = (float)glfwGetTime();
-        float delta_t = current_time - prev_time;
-        prev_time = current_time;
 
         bool colFX = false;
         bool colFZ = false;
@@ -413,10 +513,9 @@ int main(int argc, char* argv[])
         bool colLZ = false;
         bool movL = false;
 
-        std::vector<SceneObject> objectsGroup = {coelho, parede1, parede2 ,esfera};
-
+        std::vector<SceneObject> objectsGroup = {room_floor, wall1, wall2, wall3, wall4, table, coelho, chess, esfera, bowl};
         for(int i = 0; i < objectsGroup.size(); i++){
-            if(objectsGroup[i].hasCollision ){
+            if(objectsGroup[i].hasCollision && !fstAnim){
                 float nextX = cameraX;
                 float nextZ = cameraZ;
                 SceneObject nextObjX = player;
@@ -429,7 +528,6 @@ int main(int argc, char* argv[])
                     glm::mat4 modelNextPositionZ = Matrix_Translate(cameraX,cameraY,nextZ);
                     nextObjX.model = modelNextPositionX;
                     nextObjZ.model = modelNextPositionZ;
-
                     if(isBoundingBoxIntersection(nextObjX, objectsGroup[i])){
                         colFX = true;
                     }
@@ -445,7 +543,6 @@ int main(int argc, char* argv[])
                     glm::mat4 modelNextPositionZ = Matrix_Translate(cameraX,cameraY,nextZ);
                     nextObjX.model = modelNextPositionX;
                     nextObjZ.model = modelNextPositionZ;
-
                     if(isBoundingBoxIntersection(nextObjX, objectsGroup[i])){
                         colBX = true;
                     }
@@ -461,7 +558,6 @@ int main(int argc, char* argv[])
                     glm::mat4 modelNextPositionZ = Matrix_Translate(cameraX,cameraY,nextZ);
                     nextObjX.model = modelNextPositionX;
                     nextObjZ.model = modelNextPositionZ;
-
                     if(isBoundingBoxIntersection(nextObjX, objectsGroup[i])){
                         colRX = true;
                     }
@@ -477,7 +573,6 @@ int main(int argc, char* argv[])
                     glm::mat4 modelNextPositionZ = Matrix_Translate(cameraX,cameraY,nextZ);
                     nextObjX.model = modelNextPositionX;
                     nextObjZ.model = modelNextPositionZ;
-
                     if(isBoundingBoxIntersection(nextObjX, objectsGroup[i])){
                         colLX = true;
                     }
@@ -487,7 +582,6 @@ int main(int argc, char* argv[])
                 }
             }
         }
-
         // Atualizar posicao depois de fazer todos os testes
         if(!colFX && movF){
             cameraX += -w.x * delta_t * speed;
@@ -495,28 +589,24 @@ int main(int argc, char* argv[])
         if(!colFZ && movF){
             cameraZ += -w.z * delta_t * speed;
         }
-
         if(!colBX && movB){
             cameraX += w.x * delta_t * speed;
         }
         if(!colBZ && movB){
             cameraZ += w.z * delta_t * speed;
         }
-
         if(!colRX && movR){
             cameraX += u.x * delta_t * speed;
         }
         if(!colRZ && movR){
             cameraZ += u.z * delta_t * speed;
         }
-
         if(!colLX && movL){
             cameraX += -u.x * delta_t * speed;
         }
         if(!colLZ && movL){
             cameraZ += -u.z * delta_t * speed;
         }
-
         /* Movimentacao no Y *Testes* */
         if(movingUp){
             cameraY += (u.y + 1) * delta_t * speed;
@@ -524,8 +614,6 @@ int main(int argc, char* argv[])
         if(movingDown){
             cameraY += -(u.y + 1) * delta_t * speed;
         }
-
-
 
         if (g_UsePerspectiveProjection)
         {
@@ -557,62 +645,120 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
-        #define SPHERE 0
-        #define BUNNY  1
-        #define PLANE  2
-        #define BOX    3
-        #define SKYBOX 4
+        #define SPHERE      0
+        #define BUNNY       1
+        #define ROOM_FLOOR  2
+        #define WALL_1      3
+        #define SKYBOX      4
+        #define WALL_1_SIDE 5
+        #define TABLE       6
+        #define CHESS       7
+        #define BOWL        8
 
-        glm::vec4 ponto1 = glm::vec4(-19.902033, 0.913199, 1.361143, 1.000000);
-        glm::vec4 ponto2 = glm::vec4(-21.750000, 0.395814, -0.781245, 1.000000);
-        //std::cout << glm::to_string(glm::lessThan(ponto1,ponto2));
         if(!is_inspecting){
-            // Desenhamos o modelo da esfera
-            /* Usando a esfeca como modelo de colisao para o personagem*/
-            model = Matrix_Translate(cameraX,cameraY,cameraZ)*Matrix_Scale(0.2,1,0.2);
-            player.model = model;
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            // PLAYER
+            player.translate(cameraX, cameraY, cameraZ);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(player.model));
             glUniform1i(g_object_id_uniform, SPHERE);
             DrawVirtualObject("the_sphere");
 
-            // Coelho
-            model = Matrix_Translate(1.0f,0.0f,0.0f);
-            coelho.model = model;
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, BUNNY);
-            DrawVirtualObject("the_bunny");
-
-            // Coelho
-            model = Matrix_Translate(-2.0f,0.0f,0.0f);
-            esfera.model = model;
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            /*coelho.translate(direction_anim.x, direction_anim.y, direction_anim.z);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(coelho.model));
             glUniform1i(g_object_id_uniform, SPHERE);
-            DrawVirtualObject("the_sphere");
+            DrawVirtualObject("the_bunny");*/
 
-
-            //Desenhamos o modelo da caixa
-            model = Matrix_Rotate_Y(3.14159265359) * Matrix_Translate(20.50f,-0.28f,0.0f) * Matrix_Rotate_Y(3.14159265359/2);
-            parede1.model = model;
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, BOX);
-            DrawVirtualObject("box.jpg");
-
-            //Desenhamos o modelo da caixa
-            model = Matrix_Translate(8.50f,-0.28f,0.0f);
-            parede2.model = model;
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, BOX);
-            DrawVirtualObject("box.jpg");
-
-            //Chão
-            model = Matrix_Translate(0.0f,-1.0f,0.0f)
-                * Matrix_Scale(50.0f, 2.0f, 50.0f) ;
-
-            chao.model = model;
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, PLANE);
+            // Chão principal
+            room_floor.translate(0.0f, -1.0f, 0.0f);
+            room_floor.scale(10.0f, 1.0f, 8.0f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(room_floor.model));
+            glUniform1i(g_object_id_uniform, ROOM_FLOOR);
             DrawVirtualObject("the_plane");
 
+            // Parede 1
+            model = Matrix_Translate(0.0f,1.0f,-8.0f)
+            * Matrix_Scale(8.0f, 4.0f, 0.5f);
+            wall1.model = model;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, WALL_1);
+            DrawVirtualObject("box.jpg");
+
+            // Parede 2
+            model = Matrix_Rotate_Y(PI2) * Matrix_Translate(0.0f,1.0f,-10.0f) * Matrix_Scale(8.0f, 4.0f, 0.5f);
+            wall2.model = model;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, WALL_1);
+            DrawVirtualObject("box.jpg");
+
+            // Parede 3
+            model = Matrix_Translate(0.0f,1.0f,8.0f) * Matrix_Scale(8.0f, 4.0f, 0.5f);
+            wall3.model = model;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, WALL_1);
+            DrawVirtualObject("box.jpg");
+
+            // Parede 4
+            model = Matrix_Rotate_Y(PI2) * Matrix_Translate(0.0f,1.0f,10.0f) * Matrix_Scale(8.0f, 4.0f, 0.5f);
+            wall4.model = model;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, WALL_1);
+            DrawVirtualObject("box.jpg");
+
+            // Mesa de canto
+            table.translate(-5.0f, -0.4f, -4.0f);
+            table.scale(1.5f, 1.5f, 1.5f);
+            table.obj_index = TABLE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(table.model));
+            glUniform1i(g_object_id_uniform, TABLE);
+            DrawVirtualObject("the_table");
+
+            // Coelho
+            model = Matrix_Translate(3.0f,0.0f,3.0f);
+            coelho.model = model;
+            coelho.obj_index = SPHERE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, SPHERE);
+            DrawVirtualObject("the_bunny");
+
+            // Tabuleiro xadrez
+            chess.translate(-3.8f, -0.3f,-3.9f);
+            chess.scale(0.03f, 0.03f, 0.03f);
+            chess.obj_index = CHESS;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(chess.model));
+            glUniform1i(g_object_id_uniform, CHESS);
+            DrawVirtualObject("Bauhaus_Schach Schachbrett");
+
+            /* Pontos de iluminacao */
+            // Fonte
+            model = Matrix_Translate(0.0f,5.0f,0.0f) * Matrix_Scale(0.3f, 0.3f, 0.3f);
+            esfera.model = model;
+            esfera.obj_index = SPHERE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, SPHERE);
+            DrawVirtualObject("the_sphere");
+
+            // Sentido 2 <-
+            model = Matrix_Translate(-1.0f,4.0f,0.0f) * Matrix_Scale(0.3f, 0.3f, 0.3f);
+            esfera.model = model;
+            esfera.obj_index = SPHERE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, SPHERE);
+            DrawVirtualObject("the_sphere");
+
+            // Sentido 3 ->
+            model = Matrix_Translate(1.0f,4.0f,0.0f) * Matrix_Scale(0.3f, 0.3f, 0.3f);
+            esfera.model = model;
+            esfera.obj_index = SPHERE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, SPHERE);
+            DrawVirtualObject("the_sphere");
+
+            // Bowl
+            model = Matrix_Translate(-6.0f,0.2f,-4.0f) * Matrix_Rotate_X(-PI2) * Matrix_Scale(0.04,0.04,0.04) ;
+            bowl.model = model;
+            bowl.obj_index = BOWL;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, BOWL);
+            DrawVirtualObject("10315_soup_plate");
         }
 
         if(is_inspecting && interactable_object.name != "NULL"){
@@ -634,35 +780,11 @@ int main(int argc, char* argv[])
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, interactable_object.obj_index);
             DrawVirtualObject(interactable_object.name.c_str());
-
-
-
-
         }
 
         if(!is_inspecting){
             interactable_object = GetInteractableObject(objectsGroup,camera_position_c,camera_view_vector);
         }
-
-        /* Exemplo aplicacao curva de bezier
-        if (reverseDirection){
-            t_bezier -= 0.0001f;
-        } else {
-            t_bezier += 0.0001f;
-        }
-
-        if(t_bezier >= 1.0f || t_bezier <= 0.0f){
-            reverseDirection = !reverseDirection;
-        }
-
-        // Pontos da curva:
-        glm::vec3 ponto1 = glm::vec3(0.0, 0.0f, 0.0f);
-        glm::vec3 ponto2 = glm::vec3(1.0, 5.0f, 0.0f);
-        glm::vec3 ponto3 = glm::vec3(2.0, 5.0f, 0.0f);
-        glm::vec3 ponto4 = glm::vec3(3.0, 0.0f, 0.0f);
-        glm::vec3 aaa = calculateBezierPoint({ponto1, ponto2, ponto3, ponto4}, t_bezier);
-        */
-
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -773,6 +895,13 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage0"), 0);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage1"), 1);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage2"), 2);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage3"), 3);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage4"), 4);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage5"), 5);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage6"), 6);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage7"), 7);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage8"), 8);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage9"), 9);
     glUseProgram(0);
 }
 
@@ -1256,7 +1385,7 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         if(is_inspecting){
             g_AngleX += 0.002*dx;
             g_AngleY += 0.002*dy;
-        }else{
+        }else if(!fstAnim){
             // Atualizamos parâmetros da câmera com os deslocamentos
             g_CameraTheta -= 0.01f*dx;
             g_CameraPhi   += 0.01f*dy;
@@ -1388,63 +1517,71 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 
     if(!is_inspecting && action == GLFW_PRESS){
         if(key == GLFW_KEY_W ){
-                movingForward = true;
+            movingForward = true;
         }
 
         /* S -> move para tras */
         if(key == GLFW_KEY_S){
-                movingBackward = true;
+            movingBackward = true;
         }
 
         /* A -> move para esquerda */
         if(key == GLFW_KEY_A){
-                movingLeft = true;
+            movingLeft = true;
         }
 
         /* D -> move para direita */
         if(key == GLFW_KEY_D ){
-                movingRight = true;
+            movingRight = true;
+        }
+
+        if(key == GLFW_KEY_LEFT_SHIFT){
+            running = true;
         }
 
         /* Space -> move para cima */
         if(key == GLFW_KEY_SPACE ){
-                movingUp = true;
+            movingUp = true;
         }
 
         /* ctrl -> move para baixo */
         if(key == GLFW_KEY_LEFT_CONTROL){
-                movingDown = true;
+            movingDown = true;
         }
     }
 
     if(action == GLFW_RELEASE){
         if(key == GLFW_KEY_W ){
-                movingForward = false;
+            movingForward = false;
         }
 
         /* S -> move para tras */
         if(key == GLFW_KEY_S){
-                movingBackward = false;
+            movingBackward = false;
         }
 
         /* A -> move para esquerda */
         if(key == GLFW_KEY_A){
-                movingLeft = false;
+            movingLeft = false;
         }
 
         /* D -> move para direita */
         if(key == GLFW_KEY_D ){
-                movingRight = false;
+            movingRight = false;
+        }
+
+        if(key == GLFW_KEY_LEFT_SHIFT){
+            running = false;
         }
 
         /* Space -> move para cima */
         if(key == GLFW_KEY_SPACE ){
-                movingUp = false;
+            movingUp = false;
         }
 
         /* ctrl -> move para baixo */
         if(key == GLFW_KEY_LEFT_CONTROL){
-                movingDown = false;
+            movingDown = false;
         }
     }
 

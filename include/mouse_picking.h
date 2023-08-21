@@ -5,8 +5,6 @@
 #include <map>
 
 
-
-
 //https://github.com/opengl-tutorials/ogl/blob/master/misc05_picking/misc05_picking_custom.cpp
 bool TestRayOBBIntersection(
 	glm::vec3 ray_origin,        // Ray origin, in world space
@@ -135,7 +133,10 @@ SceneObject GetInteractableObject(std::vector<SceneObject>& virtual_scene ,glm::
 
         float distance;
 
-        if(obj.inspectable && TestRayOBBIntersection(camera_position_c,camera_view_vector,obj.bbox_min,obj.bbox_max,obj.model,distance)){
+        if(obj.inspectable && isRayBoudingBox(camera_view_vector,
+                                              camera_position_c,
+                                              obj,
+                                              distance)){
            if(distance < minDistance){
                 minDistance = distance;
                 if(minDistance < 1){
