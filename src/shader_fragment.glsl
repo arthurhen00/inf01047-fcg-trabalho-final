@@ -72,13 +72,16 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(vec4(-1.0, 2.5, 0.5, 0.0) - vec4(1.0, 2.0, 0.5, 0.0));
+    vec4 l = normalize(vec4(0.0f,5.0f,0.0f, 0.0f) - vec4(-1.0f,4.0f,0.0f, 0.0f));
+    vec4 l1 = normalize(vec4(0.0f,5.0f,0.0f, 0.0f) - vec4(1.0f,4.0f,0.0f, 0.0f));
+
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
 
     // Vetor que define o sentido da reflexão especular ideal.
     vec4 r = -l + 2 * n * dot(n, l); // PREENCHA AQUI o vetor de reflexão especular ideal
+    vec4 r1 = -l1 + 2 * n * dot(n, l1);
 
     vec4 h = normalize(v + l);
 
@@ -135,7 +138,7 @@ void main()
         V = position_model.z * vR - floor(position_model.z * vR);
 
         Kd = texture(TextureImage3, vec2(U,V)).rgb * texture(TextureImage4, vec2(U,V)).rgb;
-        Ks = vec3(0.1,0.1,0.1);
+        Ks = vec3(0.0,0.0,0.0);
         Ka = Kd/2;
         q = 20.0;
     } else if (object_id == WALL_1){
@@ -143,17 +146,6 @@ void main()
         float vR = 1;
 
         U = position_model.x * uR - floor(position_model.x * uR);
-        V = position_model.y * vR - floor(position_model.y * vR);
-
-        Kd= texture(TextureImage5, vec2(U,V)).rgb * texture(TextureImage6, vec2(U,V)).rgb;
-        Ks= vec3(0.0,0.0,0.0);
-        Ka= Kd/2;
-        q = 2.0;
-    } else if (object_id == WALL_1_SIDE){
-        float uR = 2.3;
-        float vR = 1;
-
-        U = position_model.z * uR - floor(position_model.z * uR);
         V = position_model.y * vR - floor(position_model.y * vR);
 
         Kd= texture(TextureImage5, vec2(U,V)).rgb * texture(TextureImage6, vec2(U,V)).rgb;

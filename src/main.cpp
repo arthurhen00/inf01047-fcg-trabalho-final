@@ -46,6 +46,7 @@
 #include <stb_image.h>
 
 #include "types.h"
+#include "collisions.h"
 #include "mouse_picking.h"
 
 
@@ -53,7 +54,6 @@
 #include "utils.h"
 #include "matrices.h"
 
-#include "collisions.h"
 
 
 #include "glm/gtx/string_cast.hpp"
@@ -311,16 +311,18 @@ int main(int argc, char* argv[])
     room_floor.inspectable = false;
 
     SceneObject wall1 = g_VirtualScene.at("box.jpg");
-    wall1.inspectable = true;
-
+    wall1.inspectable = false;
     SceneObject wall2 = g_VirtualScene.at("box.jpg");
-    wall2.inspectable = true;
+    wall2.inspectable = false;
+    SceneObject wall3 = g_VirtualScene.at("box.jpg");
+    wall3.inspectable = false;
+    SceneObject wall4 = g_VirtualScene.at("box.jpg");
+    wall4.inspectable = false;
 
     SceneObject table = g_VirtualScene.at("the_table");
     table.inspectable = true;
 
     SceneObject chess = g_VirtualScene.at("Bauhaus_Schach Schachbrett");
-    chess.inspectable = false;
 
     SceneObject esfera = g_VirtualScene.at("the_sphere");
 
@@ -504,7 +506,7 @@ int main(int argc, char* argv[])
         bool colLZ = false;
         bool movL = false;
 
-        std::vector<SceneObject> objectsGroup = {room_floor, wall1, wall2, table, coelho, chess, esfera};
+        std::vector<SceneObject> objectsGroup = {room_floor, wall1, wall2, wall3, wall4, table, coelho, chess, esfera};
         for(int i = 0; i < objectsGroup.size(); i++){
             if(objectsGroup[i].hasCollision && !fstAnim){
                 float nextX = cameraX;
@@ -673,10 +675,24 @@ int main(int argc, char* argv[])
             DrawVirtualObject("box.jpg");
 
             // Parede 2
-            wall2.translate(10.0f, 1.0f, 0.0f);
-            wall2.scale(0.3f, 4.0f, 10.5f);
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(wall2.model));
-            glUniform1i(g_object_id_uniform, WALL_1_SIDE);
+            model = Matrix_Rotate_Y(PI2) * Matrix_Translate(0.0f,1.0f,-10.0f) * Matrix_Scale(8.0f, 4.0f, 0.5f);
+            wall2.model = model;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, WALL_1);
+            DrawVirtualObject("box.jpg");
+
+            // Parede 3
+            model = Matrix_Translate(0.0f,1.0f,8.0f) * Matrix_Scale(8.0f, 4.0f, 0.5f);
+            wall3.model = model;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, WALL_1);
+            DrawVirtualObject("box.jpg");
+
+            // Parede 4
+            model = Matrix_Rotate_Y(PI2) * Matrix_Translate(0.0f,1.0f,10.0f) * Matrix_Scale(8.0f, 4.0f, 0.5f);
+            wall4.model = model;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, WALL_1);
             DrawVirtualObject("box.jpg");
 
             // Mesa de canto
@@ -704,17 +720,27 @@ int main(int argc, char* argv[])
             DrawVirtualObject("Bauhaus_Schach Schachbrett");
 
             /* Pontos de iluminacao */
-            // PT 1
-            esfera.translate(0,0,0);
+            // Fonte
+            model = Matrix_Translate(0.0f,5.0f,0.0f) * Matrix_Scale(0.3f, 0.3f, 0.3f);
+            esfera.model = model;
             esfera.obj_index = SPHERE;
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(esfera.model));
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, SPHERE);
             DrawVirtualObject("the_sphere");
 
-            // PT 2
-            esfera.translate(-2,0,0);
+            // Sentido 2 <-
+            model = Matrix_Translate(-1.0f,4.0f,0.0f) * Matrix_Scale(0.3f, 0.3f, 0.3f);
+            esfera.model = model;
             esfera.obj_index = SPHERE;
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(esfera.model));
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, SPHERE);
+            DrawVirtualObject("the_sphere");
+
+            // Sentido 3 ->
+            model = Matrix_Translate(1.0f,4.0f,0.0f) * Matrix_Scale(0.3f, 0.3f, 0.3f);
+            esfera.model = model;
+            esfera.obj_index = SPHERE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, SPHERE);
             DrawVirtualObject("the_sphere");
         }
