@@ -16,7 +16,6 @@ uniform vec4 bbox_max;
 uniform int object_id;
 uniform sampler2D TextureImage9;
 
-
 // Atributos de vértice que serão gerados como saída ("out") pelo Vertex Shader.
 // ** Estes serão interpolados pelo rasterizador! ** gerando, assim, valores
 // para cada fragmento, os quais serão recebidos como entrada pelo Fragment
@@ -82,11 +81,7 @@ void main()
         vec3 Ka; // Refletância ambiente
         float q; // Expoente especular para o modelo de iluminação de Phong
 
-        Kd = texture(TextureImage9, vec2(U,V)).rgb;
-        Ks= vec3(0.01,0.01,0.01);
-        Ka= Kd/8;
 
-        q = 32.0;
 
         vec4 p = position_world;
         vec4 v = normalize(camera_position - p);
@@ -111,6 +106,12 @@ void main()
 
         U = (position_model.x - minx)/(maxx - minx);
         V = (position_model.y - miny)/(maxy - miny);
+
+        Kd = texture(TextureImage9, vec2(U,V)).rgb;
+        Ks= vec3(0.01,0.01,0.01);
+        Ka= Kd/8;
+
+        q = 32.0;
 
 
         // Espectro da luz ambiente

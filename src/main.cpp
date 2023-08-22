@@ -270,8 +270,11 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/texture/wall_1/wood_trunk_wall_diff_1k.jpg");   // TextureImage5
     LoadTextureImage("../../data/texture/wall_1/wood_trunk_wall_disp_1k.png");   // TextureImage6
     LoadTextureImage("../../data/table/texture.jpg");                            // TextureImage7
-    LoadTextureImage("../../data/chess/GMS00103.jpg");                           // TextureImage8
+    LoadTextureImage("../../data/chess/chess_board_texture.jpg");                // TextureImage8
     LoadTextureImage("../../data/bowl/Light_Oak.jpg");                           // TextureImage9
+    LoadTextureImage("../../data/chess/white_piece_texture.jpg");                // TextureImage10
+    LoadTextureImage("../../data/chess/black_piece_texture.jpg");                // TextureImage11
+
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
 
@@ -299,9 +302,13 @@ int main(int argc, char* argv[])
     ComputeNormals(&table_model);
     BuildTrianglesAndAddToVirtualScene(&table_model);
 
-    ObjModel chess_model("../../data/chess/chess2.obj");
+    ObjModel chess_model("../../data/chess/ChessBoard.obj");
     ComputeNormals(&chess_model);
     BuildTrianglesAndAddToVirtualScene(&chess_model);
+
+    ObjModel rook_model("../../data/chess/rook.obj");
+    ComputeNormals(&rook_model);
+    BuildTrianglesAndAddToVirtualScene(&rook_model);
 
     ObjModel bowl_model("../../data/bowl/bowl.obj");
     ComputeNormals(&bowl_model);
@@ -312,7 +319,7 @@ int main(int argc, char* argv[])
     player.inspectable = false;
 
     SceneObject room_floor = g_VirtualScene.at("the_plane");
-    room_floor.hasCollision = false;
+    room_floor.has_collision = false;
     room_floor.inspectable = false;
 
     SceneObject wall1 = g_VirtualScene.at("box.jpg");
@@ -327,7 +334,7 @@ int main(int argc, char* argv[])
     SceneObject table = g_VirtualScene.at("the_table");
     table.inspectable = true;
 
-    SceneObject chess = g_VirtualScene.at("Bauhaus_Schach Schachbrett");
+    SceneObject chess = g_VirtualScene.at("chess_board");
 
     SceneObject esfera = g_VirtualScene.at("the_sphere");
 
@@ -335,6 +342,9 @@ int main(int argc, char* argv[])
     SceneObject cam_dir = g_VirtualScene.at("the_sphere");
 
     SceneObject bowl = g_VirtualScene.at("10315_soup_plate");
+    //Pecas
+    SceneObject white_rook = g_VirtualScene.at("mesh01");
+    SceneObject black_rook = g_VirtualScene.at("mesh01");
 
     if ( argc > 1 )
     {
@@ -515,7 +525,7 @@ int main(int argc, char* argv[])
 
         std::vector<SceneObject> objectsGroup = {room_floor, wall1, wall2, wall3, wall4, table, coelho, chess, esfera, bowl};
         for(int i = 0; i < objectsGroup.size(); i++){
-            if(objectsGroup[i].hasCollision && !fstAnim){
+            if(objectsGroup[i].has_collision && !fstAnim){
                 float nextX = cameraX;
                 float nextZ = cameraZ;
                 SceneObject nextObjX = player;
@@ -654,6 +664,8 @@ int main(int argc, char* argv[])
         #define TABLE       6
         #define CHESS       7
         #define BOWL        8
+        #define WHITE_PIECE 9
+        #define BLACK_PIECE 10
 
         if(!is_inspecting){
             // PLAYER
@@ -725,7 +737,23 @@ int main(int argc, char* argv[])
             chess.obj_index = CHESS;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(chess.model));
             glUniform1i(g_object_id_uniform, CHESS);
-            DrawVirtualObject("Bauhaus_Schach Schachbrett");
+            DrawVirtualObject("chess_board");
+
+            //Peças
+            white_rook.translate(-3.33f, -11.7f,-4.37f);
+            white_rook.scale(0.007f, 0.007, 0.007f);
+            white_rook.obj_index = WHITE_PIECE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(white_rook.model));
+            glUniform1i(g_object_id_uniform, WHITE_PIECE);
+            DrawVirtualObject("mesh01");
+
+            black_rook.translate(-3.33f, -11.7f,-3.42f);
+            black_rook.scale(0.007f, 0.007, 0.007f);
+            black_rook.obj_index = BLACK_PIECE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(black_rook.model));
+            glUniform1i(g_object_id_uniform, BLACK_PIECE);
+            DrawVirtualObject("mesh01");
+
 
             /* Pontos de iluminacao */
             // Fonte
@@ -759,6 +787,7 @@ int main(int argc, char* argv[])
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, BOWL);
             DrawVirtualObject("10315_soup_plate");
+
         }
 
         if(is_inspecting && interactable_object.name != "NULL"){
@@ -902,6 +931,8 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage7"), 7);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage8"), 8);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage9"), 9);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage10"), 10);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage11"), 11);
     glUseProgram(0);
 }
 

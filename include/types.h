@@ -71,7 +71,7 @@ struct SceneObject
     glm::mat4    model = Matrix_Identity();
     int          obj_index;
     bool         inspectable = true;
-    bool         hasCollision = true;
+    bool         has_collision = true;
 
         glm::vec4 get_bbox_min(){
         glm::vec4 bbox_max_global = model * bbox_min;

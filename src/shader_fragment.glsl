@@ -29,6 +29,8 @@ uniform mat4 projection;
 #define TABLE       6
 #define CHESS       7
 #define BOWL        8
+#define WHITE_PIECE 9
+#define BLACK_PIECE 10
 
 uniform int object_id;
 
@@ -47,6 +49,8 @@ uniform sampler2D TextureImage6;
 uniform sampler2D TextureImage7;
 uniform sampler2D TextureImage8;
 uniform sampler2D TextureImage9;
+uniform sampler2D TextureImage10;
+uniform sampler2D TextureImage11;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -174,7 +178,43 @@ void main()
         Ks= vec3(0.1,0.1,0.1);
         Ka= Kd/8;
         q = 2.0;
-    } else if (object_id == SKYBOX){
+    } else if (object_id == WHITE_PIECE){
+        float minx = bbox_min.x;
+        float maxx = bbox_max.x;
+
+        float miny = bbox_min.y;
+        float maxy = bbox_max.y;
+
+        float minz = bbox_min.z;
+        float maxz = bbox_max.z;
+
+        U = (position_model.x - minx)/(maxx - minx);
+        V = (position_model.y - miny)/(maxy - miny);
+
+        Kd = texture(TextureImage10, vec2(U,V)).rgb;
+        Ks = vec3(0.8,0.8,0.8);
+        Ka = Kd/2;
+        q = 32.0;
+
+    } else if (object_id == BLACK_PIECE){
+        float minx = bbox_min.x;
+        float maxx = bbox_max.x;
+
+        float miny = bbox_min.y;
+        float maxy = bbox_max.y;
+
+        float minz = bbox_min.z;
+        float maxz = bbox_max.z;
+
+        U = (position_model.x - minx)/(maxx - minx);
+        V = (position_model.y - miny)/(maxy - miny);
+
+        Kd = texture(TextureImage11, vec2(U,V)).rgb;
+        Ks = vec3(0.8,0.8,0.8);
+        Ka = Kd/2;
+        q = 32.0;
+
+    }else if (object_id == SKYBOX){
         Kd = vec3(0.0,0.0,0.0);
         Ks = vec3(0.0,0.0,0.0);
         Ka = vec3(0.0,0.0,0.0);
