@@ -4,7 +4,7 @@
 mtllib King.mtl
 
 # Shape "mesh01":
-g mesh01
+g king
 # No. points 11978:
 v -0.72239 0.00250 0.19356
 v -0.52882 0.00250 0.52881

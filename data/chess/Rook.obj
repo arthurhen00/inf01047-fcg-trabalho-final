@@ -4,7 +4,7 @@
 mtllib Rook.mtl
 
 # Shape "mesh01":
-g mesh01
+g rook
 # No. points 6818:
 v -4.76572 20.3546 1.27697
 v -3.48875 20.3546 3.48875

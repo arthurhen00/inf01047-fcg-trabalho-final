@@ -310,6 +310,22 @@ int main(int argc, char* argv[])
     ComputeNormals(&rook_model);
     BuildTrianglesAndAddToVirtualScene(&rook_model);
 
+    ObjModel knight_model("../../data/chess/knight.obj");
+    ComputeNormals(&knight_model);
+    BuildTrianglesAndAddToVirtualScene(&knight_model);
+
+    ObjModel bishop_model("../../data/chess/bishop.obj");
+    ComputeNormals(&bishop_model);
+    BuildTrianglesAndAddToVirtualScene(&bishop_model);
+
+    ObjModel queen_model("../../data/chess/queen.obj");
+    ComputeNormals(&queen_model);
+    BuildTrianglesAndAddToVirtualScene(&queen_model);
+
+    ObjModel king_model("../../data/chess/king.obj");
+    ComputeNormals(&king_model);
+    BuildTrianglesAndAddToVirtualScene(&king_model);
+
     ObjModel bowl_model("../../data/bowl/bowl.obj");
     ComputeNormals(&bowl_model);
     BuildTrianglesAndAddToVirtualScene(&bowl_model);
@@ -343,8 +359,20 @@ int main(int argc, char* argv[])
 
     SceneObject bowl = g_VirtualScene.at("10315_soup_plate");
     //Pecas
-    SceneObject white_rook = g_VirtualScene.at("mesh01");
-    SceneObject black_rook = g_VirtualScene.at("mesh01");
+    SceneObject white_rook = g_VirtualScene.at("rook");
+    SceneObject black_rook = g_VirtualScene.at("rook");
+
+    SceneObject white_knight = g_VirtualScene.at("knight");
+    SceneObject black_knight = g_VirtualScene.at("knight");
+
+    SceneObject white_bishop = g_VirtualScene.at("bishop");
+    SceneObject black_bishop = g_VirtualScene.at("bishop");
+
+    SceneObject white_queen = g_VirtualScene.at("queen");
+    SceneObject black_queen = g_VirtualScene.at("queen");
+
+    SceneObject white_king = g_VirtualScene.at("king");
+    SceneObject black_king = g_VirtualScene.at("king");
 
     if ( argc > 1 )
     {
@@ -745,14 +773,72 @@ int main(int argc, char* argv[])
             white_rook.obj_index = WHITE_PIECE;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(white_rook.model));
             glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("mesh01");
+            DrawVirtualObject("rook");
 
             black_rook.translate(-3.33f, -11.7f,-3.42f);
             black_rook.scale(0.007f, 0.007, 0.007f);
             black_rook.obj_index = BLACK_PIECE;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(black_rook.model));
             glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("mesh01");
+            DrawVirtualObject("rook");
+
+            white_knight.translate(-3.46f, -9.935f,-4.37f);
+            white_knight.scale(0.007f, 0.007, 0.007f);
+            white_knight.obj_index = WHITE_PIECE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(white_knight.model));
+            glUniform1i(g_object_id_uniform, WHITE_PIECE);
+            DrawVirtualObject("knight");
+
+            black_knight.translate(-3.46f, -9.935f,-3.42f);
+            black_knight.scale(0.007f, 0.007, 0.007f);
+            black_knight.obj_index = BLACK_PIECE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(black_knight.model));
+            glUniform1i(g_object_id_uniform, BLACK_PIECE);
+            DrawVirtualObject("knight");
+
+            white_bishop.translate(-3.59f, -13.2f,-4.37f);
+            white_bishop.scale(0.007f, 0.007, 0.007f);
+            white_bishop.obj_index = WHITE_PIECE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(white_bishop.model));
+            glUniform1i(g_object_id_uniform, WHITE_PIECE);
+            DrawVirtualObject("bishop");
+
+            black_bishop.translate(-3.59f, -13.2f,-3.42f);
+            black_bishop.scale(0.007f, 0.007, 0.007f);
+            black_bishop.obj_index = BLACK_PIECE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(black_bishop.model));
+            glUniform1i(g_object_id_uniform, BLACK_PIECE);
+            DrawVirtualObject("bishop");
+
+            white_queen.translate(-3.73f, -15.25f,-4.37f);
+            white_queen.scale(0.007f, 0.007, 0.007f);
+            white_queen.obj_index = WHITE_PIECE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(white_queen.model));
+            glUniform1i(g_object_id_uniform, WHITE_PIECE);
+            DrawVirtualObject("queen");
+
+            black_queen.translate(-3.73f, -15.25f,-3.42f);
+            black_queen.scale(0.007f, 0.007, 0.007f);
+            black_queen.obj_index = BLACK_PIECE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(black_queen.model));
+            glUniform1i(g_object_id_uniform, BLACK_PIECE);
+            DrawVirtualObject("queen");
+
+            white_king.translate(-3.86f, -18.9f,-4.37f);
+            white_king.scale(0.007f, 0.007, 0.007f);
+            white_king.obj_index = WHITE_PIECE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(white_king.model));
+            glUniform1i(g_object_id_uniform, WHITE_PIECE);
+            DrawVirtualObject("king");
+
+            black_king.translate(-3.86f, -18.9f,-3.42f);
+            black_king.scale(0.007f, 0.007, 0.007f);
+            black_king.obj_index = BLACK_PIECE;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(black_king.model));
+            glUniform1i(g_object_id_uniform, BLACK_PIECE);
+            DrawVirtualObject("king");
+
+
 
 
             /* Pontos de iluminacao */
