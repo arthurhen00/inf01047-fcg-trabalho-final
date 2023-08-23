@@ -132,16 +132,11 @@ SceneObject *GetInteractableObject(std::vector<SceneObject*> &virtual_scene ,glm
 
         float distance;
 
-        if(obj->inspectable && isRayBoudingBox(camera_view_vector,
-                                              camera_position_c,
-                                              *obj,
-                                              distance)){
+        if(obj->is_inspectable() && isRayBoudingBox(camera_view_vector,camera_position_c,*obj,distance)){
            if(distance < minDistance){
                 minDistance = distance;
                 if(minDistance < 1){
-                    if(obj->inspectable == true){
-                        interactableObject = obj;
-                    }
+                    interactableObject = obj;
                 }
             }
         }

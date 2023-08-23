@@ -1,6 +1,6 @@
 bool isBoundingBoxIntersection(SceneObject& ob1, SceneObject& ob2) {
 
-    if(!ob2.has_collision){
+    if(!ob2.has_collision()){
         return false;
     }
 

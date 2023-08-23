@@ -61,7 +61,9 @@ struct ObjModel
 // cada objeto da cena virtual.
 struct SceneObject
 {
+    private:
     std::string  name;        // Nome do objeto
+    std::string  model_name;
     size_t       first_index; // Índice do primeiro vértice dentro do vetor indices[] definido em BuildTrianglesAndAddToVirtualScene()
     size_t       num_indices; // Número de índices do objeto dentro do vetor indices[] definido em BuildTrianglesAndAddToVirtualScene()
     GLenum       rendering_mode; // Modo de rasterização (GL_TRIANGLES, GL_TRIANGLE_STRIP, etc.)
@@ -69,11 +71,83 @@ struct SceneObject
     glm::vec4    bbox_min; // Axis-Aligned Bounding Box do objeto
     glm::vec4    bbox_max;
     glm::mat4    model = Matrix_Identity();
-    int          obj_index;
+    int          index;
     bool         inspectable = true;
-    bool         has_collision = true;
+    bool         collision = true;
 
-        glm::vec4 get_bbox_min(){
+    public:
+    SceneObject(){
+    }
+
+    SceneObject(int first_index, int num_indices, GLenum rendering_mode,
+                GLuint vertex_array_object_id, int obj_index,
+                const glm::vec3& bbox_min, const glm::vec3& bbox_max)
+        : first_index(first_index),
+          num_indices(num_indices),
+          rendering_mode(rendering_mode),
+          vertex_array_object_id(vertex_array_object_id),
+          bbox_min(glm::vec4(bbox_min,1.0f)),
+          bbox_max(glm::vec4(bbox_max,1.0f)),
+          index(obj_index) {
+    }
+
+    size_t get_first_index(){
+        return first_index;
+    }
+    size_t get_num_indices(){
+        return num_indices;
+    }
+    GLenum get_rendering_mode(){
+        return rendering_mode;
+    }
+    GLuint get_vertex_array_object_id(){
+        return vertex_array_object_id;
+    }
+    void set_index(int index){
+        this->index = index;
+    }
+
+    void set_collision(bool collision){
+        this->collision = collision;
+    }
+
+    void set_inspectable(bool inspectable){
+        this->inspectable = inspectable;
+    }
+
+    void set_name(std::string name){
+        this->name = name;
+    }
+
+    void set_model_name(std::string model_name){
+        this->model_name = model_name;
+    }
+
+    int get_index(){
+        return index;
+    }
+
+    std::string get_name(){
+        return name;
+    }
+
+    std::string get_model_name(){
+        return model_name;
+    }
+
+    glm::mat4 get_model(){
+        return model;
+    }
+
+    bool has_collision(){
+        return collision;
+    }
+
+    bool is_inspectable(){
+        return inspectable;
+    }
+
+    glm::vec4 get_bbox_min(){
         glm::vec4 bbox_max_global = model * bbox_min;
         glm::vec4 bbox_min_global = model * bbox_max;
 
