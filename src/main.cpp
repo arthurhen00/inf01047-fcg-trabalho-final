@@ -170,7 +170,7 @@ GLint g_bbox_min_uniform;
 GLint g_bbox_max_uniform;
 
 
-SceneObject interactable_object;
+SceneObject *interactable_object;
 bool is_inspecting = false;
 // Variaveis da free cam
 float cameraX = 7.5f;
@@ -657,8 +657,8 @@ int main(int argc, char* argv[])
 
         glm::vec3 direction_anim = glm::vec3(0,0,0);
 
-        if(is_inspecting && interactable_object.name != "NULL"){
-            glm::vec4 bbox_center = interactable_object.get_bbox_center();
+        if(is_inspecting && interactable_object != NULL){
+            glm::vec4 bbox_center = interactable_object->get_bbox_center();
             glm::vec4 vec = glm::normalize(glm::vec4(0.0f,0.0f,1.0f,0.0f)) * g_CameraDistance;
             camera_position_c  = bbox_center + vec;
             camera_view_vector = bbox_center - camera_position_c;
@@ -764,9 +764,10 @@ int main(int argc, char* argv[])
         bool colLZ = false;
         bool movL = false;
 
-        std::vector<SceneObject> objects_group = {room_floor, wall1, wall2, wall3, wall4, table, coelho, chess_board, esfera, bowl};
-        for(int i = 0; i < objects_group.size(); i++){
-            if(objects_group[i].has_collision && !fstAnim){
+        std::vector<SceneObject*> objects_group = {&room_floor, &wall1, &wall2, &wall3, &wall4, &table, &coelho, &chess_board, &esfera, &bowl};
+        for(SceneObject *i : objects_group){
+            SceneObject obj = *i;
+            if(obj.has_collision && !fstAnim){
                 float nextX = cameraX;
                 float nextZ = cameraZ;
                 SceneObject nextObjX = player;
@@ -779,10 +780,10 @@ int main(int argc, char* argv[])
                     glm::mat4 modelNextPositionZ = Matrix_Translate(cameraX,cameraY,nextZ);
                     nextObjX.model = modelNextPositionX;
                     nextObjZ.model = modelNextPositionZ;
-                    if(isBoundingBoxIntersection(nextObjX, objects_group[i])){
+                    if(isBoundingBoxIntersection(nextObjX, obj)){
                         colFX = true;
                     }
-                    if(isBoundingBoxIntersection(nextObjZ, objects_group[i])){
+                    if(isBoundingBoxIntersection(nextObjZ, obj)){
                         colFZ = true;
                     }
                 }
@@ -794,10 +795,10 @@ int main(int argc, char* argv[])
                     glm::mat4 modelNextPositionZ = Matrix_Translate(cameraX,cameraY,nextZ);
                     nextObjX.model = modelNextPositionX;
                     nextObjZ.model = modelNextPositionZ;
-                    if(isBoundingBoxIntersection(nextObjX, objects_group[i])){
+                    if(isBoundingBoxIntersection(nextObjX, obj)){
                         colBX = true;
                     }
-                    if(isBoundingBoxIntersection(nextObjZ, objects_group[i])){
+                    if(isBoundingBoxIntersection(nextObjZ, obj)){
                         colBZ = true;
                     }
                 }
@@ -809,10 +810,10 @@ int main(int argc, char* argv[])
                     glm::mat4 modelNextPositionZ = Matrix_Translate(cameraX,cameraY,nextZ);
                     nextObjX.model = modelNextPositionX;
                     nextObjZ.model = modelNextPositionZ;
-                    if(isBoundingBoxIntersection(nextObjX, objects_group[i])){
+                    if(isBoundingBoxIntersection(nextObjX, obj)){
                         colRX = true;
                     }
-                    if(isBoundingBoxIntersection(nextObjZ, objects_group[i])){
+                    if(isBoundingBoxIntersection(nextObjZ, obj)){
                         colRZ = true;
                     }
                 }
@@ -824,10 +825,10 @@ int main(int argc, char* argv[])
                     glm::mat4 modelNextPositionZ = Matrix_Translate(cameraX,cameraY,nextZ);
                     nextObjX.model = modelNextPositionX;
                     nextObjZ.model = modelNextPositionZ;
-                    if(isBoundingBoxIntersection(nextObjX, objects_group[i])){
+                    if(isBoundingBoxIntersection(nextObjX, obj)){
                         colLX = true;
                     }
-                    if(isBoundingBoxIntersection(nextObjZ, objects_group[i])){
+                    if(isBoundingBoxIntersection(nextObjZ, obj)){
                         colLZ = true;
                     }
                 }
@@ -937,7 +938,6 @@ int main(int argc, char* argv[])
             DrawVirtualObject("box.jpg");
 
             // Mesa de canto[
-            objects_group.at(5).translate(0.001,0.0,0.0);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(table.model));
             glUniform1i(g_object_id_uniform, TABLE);
             DrawVirtualObject("the_table");
@@ -1113,7 +1113,7 @@ int main(int argc, char* argv[])
             DrawVirtualObject("10315_soup_plate");
         }
 
-        if(is_inspecting && interactable_object.name != "NULL"){
+        if(is_inspecting && interactable_object != NULL){
             model = Matrix_Translate(camera_position_c.x,camera_position_c.y,camera_position_c.z);
 
             glDisable(GL_DEPTH_TEST);
@@ -1125,17 +1125,13 @@ int main(int argc, char* argv[])
             glEnable(GL_CULL_FACE);
             glEnable(GL_DEPTH_TEST);
 
-            model = interactable_object.model
+            model = interactable_object->model
                   * Matrix_Rotate_Z(g_AngleZ)
                   * Matrix_Rotate_Y(g_AngleY)
                   * Matrix_Rotate_X(g_AngleX);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, interactable_object.obj_index);
-            DrawVirtualObject(interactable_object.name.c_str());
-
-
-            glm::vec4 vetor = glm::vec4(0,1,0,0);
-            std::cout<< dotproduct(vetor * model, camera_view_vector_mov) << std::endl;
+            glUniform1i(g_object_id_uniform, interactable_object->obj_index);
+            DrawVirtualObject(interactable_object->name.c_str());
         }
 
         if(!is_inspecting){
@@ -1862,12 +1858,34 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     }
 
     if(key == GLFW_KEY_E && action == GLFW_PRESS){
-        if(interactable_object.name != "NULL" && !is_inspecting){
-           is_inspecting = true;
+        if(interactable_object != NULL && !is_inspecting){
+            is_inspecting = true;
             g_AngleX = 0.0;
             g_AngleY = 0.0;
             g_AngleZ = 0.0;
         }
+    }
+
+    /*Coleta*/
+    if(key == GLFW_KEY_F && GLFW_PRESS & is_inspecting){
+        if(interactable_object->name == "10315_soup_plate"){
+
+            glm::mat4 model = interactable_object->model
+                  * Matrix_Rotate_Z(g_AngleZ)
+                  * Matrix_Rotate_Y(g_AngleY)
+                  * Matrix_Rotate_X(g_AngleX);
+
+            glm::vec4 bowl_up = glm::vec4(0,1,0,0);
+            glm::vec4 visible_v = (bowl_up * model);
+
+            visible_v.w = 0.0f;
+
+            std::cout << dotproduct(visible_v, camera_view_vector) << std::endl;
+
+            //interactable_object->set_position(1,1,1);
+            //is_inspecting = false;
+        }
+
     }
 
     /* coordenadas da camera: x, y, z*/

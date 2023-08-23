@@ -121,26 +121,25 @@ bool TestRayOBBIntersection(
 
 }
 
-SceneObject GetInteractableObject(std::vector<SceneObject>& virtual_scene ,glm::vec4& camera_position_c, glm::vec4& camera_view_vector ){
-    SceneObject interactableObject;
-    interactableObject.name = "NULL";
+SceneObject *GetInteractableObject(std::vector<SceneObject*> &virtual_scene ,glm::vec4& camera_position_c, glm::vec4& camera_view_vector ){
+    SceneObject *interactableObject = NULL;
 
     float minDistance = 10000;
 
     int scene_size = virtual_scene.size();
     for(int i = 0; i < scene_size; i++){
-        SceneObject obj = virtual_scene[i];
+        SceneObject *obj = virtual_scene[i];
 
         float distance;
 
-        if(obj.inspectable && isRayBoudingBox(camera_view_vector,
+        if(obj->inspectable && isRayBoudingBox(camera_view_vector,
                                               camera_position_c,
-                                              obj,
+                                              *obj,
                                               distance)){
            if(distance < minDistance){
                 minDistance = distance;
                 if(minDistance < 1){
-                    if(obj.inspectable == true){
+                    if(obj->inspectable == true){
                         interactableObject = obj;
                     }
                 }
