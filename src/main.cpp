@@ -185,6 +185,8 @@ bool movingDown     = false;
 bool running        = false;
 bool fstAnim        = false;
 
+glm::vec4 camera_view_vector;
+
 glm::vec3 calculateBezierPoint(const std::vector<glm::vec3>& controlPoints, float t);
 
 int obj_index = 0;
@@ -326,53 +328,260 @@ int main(int argc, char* argv[])
     ComputeNormals(&king_model);
     BuildTrianglesAndAddToVirtualScene(&king_model);
 
+    ObjModel pawn_model("../../data/chess/pawn.obj");
+    ComputeNormals(&pawn_model);
+    BuildTrianglesAndAddToVirtualScene(&pawn_model);
+
     ObjModel bowl_model("../../data/bowl/bowl.obj");
     ComputeNormals(&bowl_model);
     BuildTrianglesAndAddToVirtualScene(&bowl_model);
+
+
+    #define SPHERE      0
+    #define BUNNY       1
+    #define ROOM_FLOOR  2
+    #define WALL_1      3
+    #define SKYBOX      4
+    #define WALL_1_SIDE 5
+    #define TABLE       6
+    #define CHESS       7
+    #define BOWL        8
+    #define WHITE_PIECE 9
+    #define BLACK_PIECE 10
 
     /* Criacao de objetos */
     SceneObject player = g_VirtualScene.at("the_sphere");
     player.inspectable = false;
 
+    // Chão principal
     SceneObject room_floor = g_VirtualScene.at("the_plane");
+    room_floor.set_position(0.0f, -1.0f, 0.0f);
+    room_floor.scale(10.0f, 1.0f, 8.0f);
     room_floor.has_collision = false;
     room_floor.inspectable = false;
+    room_floor.obj_index = ROOM_FLOOR;
 
     SceneObject wall1 = g_VirtualScene.at("box.jpg");
     wall1.inspectable = false;
+    wall1.scale(8.0f, 4.0f, 0.5f);
+    wall1.set_position(0.0f,1.0f,-8.0f);
+    wall1.obj_index = WALL_1;
+
     SceneObject wall2 = g_VirtualScene.at("box.jpg");
+    wall2.mRotate(0.0f,PI2,0.0f);
+    wall2.scale(8.0f, 4.0f, 0.5f);
+    wall2.set_position(-10.0f,1.0f,0.0f);
     wall2.inspectable = false;
+    wall2.obj_index = WALL_1;
+
+    // Parede 3
     SceneObject wall3 = g_VirtualScene.at("box.jpg");
+    wall3.set_position(0.0f,1.0f,8.0f);
+    wall3.scale(8.0f, 4.0f, 0.5f);
     wall3.inspectable = false;
+    wall3.obj_index = WALL_1;
+
+    // Parede 4
     SceneObject wall4 = g_VirtualScene.at("box.jpg");
+    wall4.mRotate(0.0f,PI2,0.0f);
+    wall4.scale(8.0f, 4.0f, 0.5f);
+    wall4.set_position(10.0f,1.0f,0.0f);
     wall4.inspectable = false;
-
-    SceneObject table = g_VirtualScene.at("the_table");
-    table.inspectable = true;
-
-    SceneObject chess = g_VirtualScene.at("chess_board");
+    wall4.obj_index = WALL_1;
 
     SceneObject esfera = g_VirtualScene.at("the_sphere");
 
+    // Coelho
     SceneObject coelho = g_VirtualScene.at("the_bunny");
+    coelho.set_position(3.0f,0.0f,3.0f);
+    coelho.obj_index = SPHERE;
+
     SceneObject cam_dir = g_VirtualScene.at("the_sphere");
 
     SceneObject bowl = g_VirtualScene.at("10315_soup_plate");
+    bowl.scale(0.04,0.04,0.04);
+    bowl.mRotate(-PI2,0.0f,0.0f);
+    bowl.set_position(-6.0f,0.2f,-4.0f);
+    bowl.obj_index = BOWL;
+
+    // Mesa de canto
+    SceneObject table = g_VirtualScene.at("the_table");
+    table.scale(1.5f, 1.5f, 1.5f);
+    table.set_position(-5.0f, -0.4f, -4.0f);
+    table.obj_index = TABLE;
+    table.inspectable = true;
+
+    // Tabuleiro xadrez
+    SceneObject chess_board = g_VirtualScene.at("chess_board");
+    chess_board.scale(0.03f, 0.03f, 0.03f);
+    chess_board.set_position(-3.8f, 0.2f,-3.9f);
+    chess_board.obj_index = CHESS;
+
     //Pecas
+    float piece_height = 0.23;
+
     SceneObject white_rook = g_VirtualScene.at("rook");
+    white_rook.scale(0.007f, 0.007, 0.007f);
+    white_rook.set_position(-3.33f, piece_height,-4.37f);
+    white_rook.obj_index = WHITE_PIECE;
+
     SceneObject black_rook = g_VirtualScene.at("rook");
+    black_rook.scale(0.007f, 0.007, 0.007f);
+    black_rook.set_position(-3.33f,piece_height,-3.42f);
+    black_rook.obj_index = BLACK_PIECE;
+
 
     SceneObject white_knight = g_VirtualScene.at("knight");
+    white_knight.translate(-3.46f,piece_height,-4.37f);
+    white_knight.scale(0.007f, 0.007, 0.007f);
+    white_knight.obj_index = WHITE_PIECE;
+
     SceneObject black_knight = g_VirtualScene.at("knight");
+    black_knight.translate(-3.46f, piece_height,-3.42f);
+    black_knight.scale(0.007f, 0.007, 0.007f);
+    black_knight.obj_index = BLACK_PIECE;
+
 
     SceneObject white_bishop = g_VirtualScene.at("bishop");
+    white_bishop.translate(-3.59f, piece_height,-4.37f);
+    white_bishop.scale(0.007f, 0.007, 0.007f);
+    white_bishop.obj_index = WHITE_PIECE;
+
     SceneObject black_bishop = g_VirtualScene.at("bishop");
+    black_bishop.translate(-3.59f, piece_height,-3.42f);
+    black_bishop.scale(0.007f, 0.007, 0.007f);
+    black_bishop.obj_index = BLACK_PIECE;
 
     SceneObject white_queen = g_VirtualScene.at("queen");
+    white_queen.translate(-3.73f, piece_height,-4.37f);
+    white_queen.scale(0.007f, 0.007, 0.007f);
+    white_queen.obj_index = WHITE_PIECE;
+
     SceneObject black_queen = g_VirtualScene.at("queen");
+    black_queen.translate(-3.73f, piece_height,-3.42f);
+    black_queen.scale(0.007f, 0.007, 0.007f);
+    black_queen.obj_index = BLACK_PIECE;
 
     SceneObject white_king = g_VirtualScene.at("king");
+    white_king.translate(-3.87f, piece_height,-4.37f);
+    white_king.scale(0.007f, 0.007, 0.007f);
+    white_king.obj_index = WHITE_PIECE;
+
     SceneObject black_king = g_VirtualScene.at("king");
+    black_king.translate(-3.87f, piece_height,-3.42f);
+    black_king.scale(0.007f, 0.007, 0.007f);
+    black_king.obj_index = BLACK_PIECE;
+
+    SceneObject left_white_bishop = g_VirtualScene.at("bishop");
+    left_white_bishop.translate(-4.00f, piece_height,-4.37f);
+    left_white_bishop.scale(0.007f, 0.007, 0.007f);
+    left_white_bishop.obj_index = WHITE_PIECE;
+
+    SceneObject left_black_bishop = g_VirtualScene.at("bishop");
+    left_black_bishop.translate(-4.00f, piece_height,-3.42f);
+    left_black_bishop.scale(0.007f, 0.007, 0.007f);
+    left_black_bishop.obj_index = BLACK_PIECE;
+
+    SceneObject left_white_knight = g_VirtualScene.at("knight");
+    left_white_knight.translate(-4.14f,piece_height,-4.37f);
+    left_white_knight.scale(0.007f, 0.007, 0.007f);
+    left_white_knight.obj_index = WHITE_PIECE;
+
+    SceneObject left_black_knight = g_VirtualScene.at("knight");
+    left_black_knight.translate(-4.14f, piece_height,-3.42f);
+    left_black_knight.scale(0.007f, 0.007, 0.007f);
+    left_black_knight.obj_index = BLACK_PIECE;
+
+    SceneObject left_white_rook = g_VirtualScene.at("rook");
+    left_white_rook.scale(0.007f, 0.007, 0.007f);
+    left_white_rook.set_position(-4.28f, piece_height,-4.37f);
+    left_white_rook.obj_index = WHITE_PIECE;
+
+    SceneObject left_black_rook = g_VirtualScene.at("rook");
+    left_black_rook.scale(0.007f, 0.007, 0.007f);
+    left_black_rook.set_position(-4.28f,piece_height,-3.42f);
+    left_black_rook.obj_index = BLACK_PIECE;
+
+    SceneObject a_white_pawn = g_VirtualScene.at("pawn");
+    a_white_pawn.translate(-3.33f,piece_height,-4.24f);
+    a_white_pawn.scale(0.007f, 0.007, 0.007f);
+    a_white_pawn.obj_index = WHITE_PIECE;
+
+    SceneObject b_white_pawn = g_VirtualScene.at("pawn");
+    b_white_pawn.translate(-3.465f,piece_height,-4.24f);
+    b_white_pawn.scale(0.007f, 0.007, 0.007f);
+    b_white_pawn.obj_index = WHITE_PIECE;
+
+    SceneObject c_white_pawn = g_VirtualScene.at("pawn");
+    c_white_pawn.translate(-3.60f,piece_height,-4.24f);
+    c_white_pawn.scale(0.007f, 0.007, 0.007f);
+    c_white_pawn.obj_index = WHITE_PIECE;
+
+    SceneObject d_white_pawn = g_VirtualScene.at("pawn");
+    d_white_pawn.translate(-3.735f,piece_height,-4.24f);
+    d_white_pawn.scale(0.007f, 0.007, 0.007f);
+    d_white_pawn.obj_index = WHITE_PIECE;
+
+    SceneObject e_white_pawn = g_VirtualScene.at("pawn");
+    e_white_pawn.translate(-3.87f,piece_height,-4.24f);
+    e_white_pawn.scale(0.007f, 0.007, 0.007f);
+    e_white_pawn.obj_index = WHITE_PIECE;
+
+    SceneObject f_white_pawn = g_VirtualScene.at("pawn");
+    f_white_pawn.translate(-4.005f,piece_height,-4.24f);
+    f_white_pawn.scale(0.007f, 0.007, 0.007f);
+    f_white_pawn.obj_index = WHITE_PIECE;
+
+    SceneObject g_white_pawn = g_VirtualScene.at("pawn");
+    g_white_pawn.translate(-4.14f,piece_height,-4.24f);
+    g_white_pawn.scale(0.007f, 0.007, 0.007f);
+    g_white_pawn.obj_index = WHITE_PIECE;
+
+    SceneObject h_white_pawn = g_VirtualScene.at("pawn");
+    h_white_pawn.translate(-4.275f,piece_height,-4.24f);
+    h_white_pawn.scale(0.007f, 0.007, 0.007f);
+    h_white_pawn.obj_index = WHITE_PIECE;
+
+    SceneObject a_black_pawn = g_VirtualScene.at("pawn");
+    a_black_pawn.translate(-3.33f,piece_height,-3.55f);
+    a_black_pawn.scale(0.007f, 0.007, 0.007f);
+    a_black_pawn.obj_index = BLACK_PIECE;
+
+    SceneObject b_black_pawn = g_VirtualScene.at("pawn");
+    b_black_pawn.translate(-3.465f,piece_height,-3.55f);
+    b_black_pawn.scale(0.007f, 0.007, 0.007f);
+    b_black_pawn.obj_index = BLACK_PIECE;
+
+    SceneObject c_black_pawn = g_VirtualScene.at("pawn");
+    c_black_pawn.translate(-3.60f,piece_height,-3.55f);
+    c_black_pawn.scale(0.007f, 0.007, 0.007f);
+    c_black_pawn.obj_index = BLACK_PIECE;
+
+    SceneObject d_black_pawn = g_VirtualScene.at("pawn");
+    d_black_pawn.translate(-3.735f,piece_height,-3.55f);
+    d_black_pawn.scale(0.007f, 0.007, 0.007f);
+    d_black_pawn.obj_index = BLACK_PIECE;
+
+    SceneObject e_black_pawn = g_VirtualScene.at("pawn");
+    e_black_pawn.translate(-3.87f,piece_height,-3.55f);
+    e_black_pawn.scale(0.007f, 0.007, 0.007f);
+    e_black_pawn.obj_index = BLACK_PIECE;
+
+    SceneObject f_black_pawn = g_VirtualScene.at("pawn");
+    f_black_pawn.translate(-4.005f,piece_height,-3.55f);
+    f_black_pawn.scale(0.007f, 0.007, 0.007f);
+    f_black_pawn.obj_index = BLACK_PIECE;
+
+    SceneObject g_black_pawn = g_VirtualScene.at("pawn");
+    g_black_pawn.translate(-4.14f,piece_height,-3.55f);
+    g_black_pawn.scale(0.007f, 0.007, 0.007f);
+    g_black_pawn.obj_index = BLACK_PIECE;
+
+    SceneObject h_black_pawn = g_VirtualScene.at("pawn");
+    h_black_pawn.translate(-4.275f,piece_height,-3.55f);
+    h_black_pawn.scale(0.007f, 0.007, 0.007f);
+    h_black_pawn.obj_index = BLACK_PIECE;
+
 
     if ( argc > 1 )
     {
@@ -399,6 +608,10 @@ int main(int argc, char* argv[])
     float t_bezier = 0.0f;
     float t_bezier2 = 0.0f;
     float total_t = 0;
+
+
+    glm::mat4 model = Matrix_Identity();
+
 
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -435,7 +648,7 @@ int main(int argc, char* argv[])
         glm::vec4 camera_position_c  = glm::vec4(cameraX,cameraY,cameraZ,1.0f); // Ponto "c", centro da câmera
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
         //glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
-        glm::vec4 camera_view_vector;
+
         glm::vec4 camera_view_vector_mov = -glm::vec4(x, 0.0f, z, 0.0f);
 
         float current_time = (float)glfwGetTime();
@@ -551,9 +764,9 @@ int main(int argc, char* argv[])
         bool colLZ = false;
         bool movL = false;
 
-        std::vector<SceneObject> objectsGroup = {room_floor, wall1, wall2, wall3, wall4, table, coelho, chess, esfera, bowl};
-        for(int i = 0; i < objectsGroup.size(); i++){
-            if(objectsGroup[i].has_collision && !fstAnim){
+        std::vector<SceneObject> objects_group = {room_floor, wall1, wall2, wall3, wall4, table, coelho, chess_board, esfera, bowl};
+        for(int i = 0; i < objects_group.size(); i++){
+            if(objects_group[i].has_collision && !fstAnim){
                 float nextX = cameraX;
                 float nextZ = cameraZ;
                 SceneObject nextObjX = player;
@@ -566,10 +779,10 @@ int main(int argc, char* argv[])
                     glm::mat4 modelNextPositionZ = Matrix_Translate(cameraX,cameraY,nextZ);
                     nextObjX.model = modelNextPositionX;
                     nextObjZ.model = modelNextPositionZ;
-                    if(isBoundingBoxIntersection(nextObjX, objectsGroup[i])){
+                    if(isBoundingBoxIntersection(nextObjX, objects_group[i])){
                         colFX = true;
                     }
-                    if(isBoundingBoxIntersection(nextObjZ, objectsGroup[i])){
+                    if(isBoundingBoxIntersection(nextObjZ, objects_group[i])){
                         colFZ = true;
                     }
                 }
@@ -581,10 +794,10 @@ int main(int argc, char* argv[])
                     glm::mat4 modelNextPositionZ = Matrix_Translate(cameraX,cameraY,nextZ);
                     nextObjX.model = modelNextPositionX;
                     nextObjZ.model = modelNextPositionZ;
-                    if(isBoundingBoxIntersection(nextObjX, objectsGroup[i])){
+                    if(isBoundingBoxIntersection(nextObjX, objects_group[i])){
                         colBX = true;
                     }
-                    if(isBoundingBoxIntersection(nextObjZ, objectsGroup[i])){
+                    if(isBoundingBoxIntersection(nextObjZ, objects_group[i])){
                         colBZ = true;
                     }
                 }
@@ -596,10 +809,10 @@ int main(int argc, char* argv[])
                     glm::mat4 modelNextPositionZ = Matrix_Translate(cameraX,cameraY,nextZ);
                     nextObjX.model = modelNextPositionX;
                     nextObjZ.model = modelNextPositionZ;
-                    if(isBoundingBoxIntersection(nextObjX, objectsGroup[i])){
+                    if(isBoundingBoxIntersection(nextObjX, objects_group[i])){
                         colRX = true;
                     }
-                    if(isBoundingBoxIntersection(nextObjZ, objectsGroup[i])){
+                    if(isBoundingBoxIntersection(nextObjZ, objects_group[i])){
                         colRZ = true;
                     }
                 }
@@ -611,10 +824,10 @@ int main(int argc, char* argv[])
                     glm::mat4 modelNextPositionZ = Matrix_Translate(cameraX,cameraY,nextZ);
                     nextObjX.model = modelNextPositionX;
                     nextObjZ.model = modelNextPositionZ;
-                    if(isBoundingBoxIntersection(nextObjX, objectsGroup[i])){
+                    if(isBoundingBoxIntersection(nextObjX, objects_group[i])){
                         colLX = true;
                     }
-                    if(isBoundingBoxIntersection(nextObjZ, objectsGroup[i])){
+                    if(isBoundingBoxIntersection(nextObjZ, objects_group[i])){
                         colLZ = true;
                     }
                 }
@@ -646,12 +859,13 @@ int main(int argc, char* argv[])
             cameraZ += -u.z * delta_t * speed;
         }
         /* Movimentacao no Y *Testes* */
+        /*
         if(movingUp){
             cameraY += (u.y + 1) * delta_t * speed;
         }
         if(movingDown){
             cameraY += -(u.y + 1) * delta_t * speed;
-        }
+        }*/
 
         if (g_UsePerspectiveProjection)
         {
@@ -675,7 +889,7 @@ int main(int argc, char* argv[])
         }
 
 
-        glm::mat4 model = Matrix_Identity();
+
 
         // Enviamos as matrizes "view" e "projection" para a placa de vídeo
         // (GPU). Veja o arquivo "shader_vertex.glsl", onde estas são
@@ -683,162 +897,189 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
-        #define SPHERE      0
-        #define BUNNY       1
-        #define ROOM_FLOOR  2
-        #define WALL_1      3
-        #define SKYBOX      4
-        #define WALL_1_SIDE 5
-        #define TABLE       6
-        #define CHESS       7
-        #define BOWL        8
-        #define WHITE_PIECE 9
-        #define BLACK_PIECE 10
+
+
+        /*coelho.translate(direction_anim.x, direction_anim.y, direction_anim.z);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(coelho.model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("the_bunny");*/
 
         if(!is_inspecting){
             // PLAYER
-            player.translate(cameraX, cameraY, cameraZ);
+            player.set_position(cameraX, cameraY, cameraZ);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(player.model));
             glUniform1i(g_object_id_uniform, SPHERE);
             DrawVirtualObject("the_sphere");
 
-            /*coelho.translate(direction_anim.x, direction_anim.y, direction_anim.z);
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(coelho.model));
-            glUniform1i(g_object_id_uniform, SPHERE);
-            DrawVirtualObject("the_bunny");*/
-
             // Chão principal
-            room_floor.translate(0.0f, -1.0f, 0.0f);
-            room_floor.scale(10.0f, 1.0f, 8.0f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(room_floor.model));
             glUniform1i(g_object_id_uniform, ROOM_FLOOR);
             DrawVirtualObject("the_plane");
 
             // Parede 1
-            model = Matrix_Translate(0.0f,1.0f,-8.0f)
-            * Matrix_Scale(8.0f, 4.0f, 0.5f);
-            wall1.model = model;
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(wall1.model));
             glUniform1i(g_object_id_uniform, WALL_1);
             DrawVirtualObject("box.jpg");
 
             // Parede 2
-            model = Matrix_Rotate_Y(PI2) * Matrix_Translate(0.0f,1.0f,-10.0f) * Matrix_Scale(8.0f, 4.0f, 0.5f);
-            wall2.model = model;
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(wall2.model));
             glUniform1i(g_object_id_uniform, WALL_1);
             DrawVirtualObject("box.jpg");
 
             // Parede 3
-            model = Matrix_Translate(0.0f,1.0f,8.0f) * Matrix_Scale(8.0f, 4.0f, 0.5f);
-            wall3.model = model;
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(wall3.model));
             glUniform1i(g_object_id_uniform, WALL_1);
             DrawVirtualObject("box.jpg");
 
             // Parede 4
-            model = Matrix_Rotate_Y(PI2) * Matrix_Translate(0.0f,1.0f,10.0f) * Matrix_Scale(8.0f, 4.0f, 0.5f);
-            wall4.model = model;
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(wall4.model));
             glUniform1i(g_object_id_uniform, WALL_1);
             DrawVirtualObject("box.jpg");
 
-            // Mesa de canto
-            table.translate(-5.0f, -0.4f, -4.0f);
-            table.scale(1.5f, 1.5f, 1.5f);
-            table.obj_index = TABLE;
+            // Mesa de canto[
+            objects_group.at(5).translate(0.001,0.0,0.0);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(table.model));
             glUniform1i(g_object_id_uniform, TABLE);
             DrawVirtualObject("the_table");
 
             // Coelho
-            model = Matrix_Translate(3.0f,0.0f,3.0f);
-            coelho.model = model;
-            coelho.obj_index = SPHERE;
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(coelho.model));
             glUniform1i(g_object_id_uniform, SPHERE);
             DrawVirtualObject("the_bunny");
 
             // Tabuleiro xadrez
-            chess.translate(-3.8f, -0.3f,-3.9f);
-            chess.scale(0.03f, 0.03f, 0.03f);
-            chess.obj_index = CHESS;
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(chess.model));
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(chess_board.model));
             glUniform1i(g_object_id_uniform, CHESS);
             DrawVirtualObject("chess_board");
 
             //Peças
-            white_rook.translate(-3.33f, -11.7f,-4.37f);
-            white_rook.scale(0.007f, 0.007, 0.007f);
-            white_rook.obj_index = WHITE_PIECE;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(white_rook.model));
             glUniform1i(g_object_id_uniform, WHITE_PIECE);
             DrawVirtualObject("rook");
 
-            black_rook.translate(-3.33f, -11.7f,-3.42f);
-            black_rook.scale(0.007f, 0.007, 0.007f);
-            black_rook.obj_index = BLACK_PIECE;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(black_rook.model));
             glUniform1i(g_object_id_uniform, BLACK_PIECE);
             DrawVirtualObject("rook");
 
-            white_knight.translate(-3.46f, -9.935f,-4.37f);
-            white_knight.scale(0.007f, 0.007, 0.007f);
-            white_knight.obj_index = WHITE_PIECE;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(white_knight.model));
             glUniform1i(g_object_id_uniform, WHITE_PIECE);
             DrawVirtualObject("knight");
 
-            black_knight.translate(-3.46f, -9.935f,-3.42f);
-            black_knight.scale(0.007f, 0.007, 0.007f);
-            black_knight.obj_index = BLACK_PIECE;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(black_knight.model));
             glUniform1i(g_object_id_uniform, BLACK_PIECE);
             DrawVirtualObject("knight");
 
-            white_bishop.translate(-3.59f, -13.2f,-4.37f);
-            white_bishop.scale(0.007f, 0.007, 0.007f);
-            white_bishop.obj_index = WHITE_PIECE;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(white_bishop.model));
             glUniform1i(g_object_id_uniform, WHITE_PIECE);
             DrawVirtualObject("bishop");
 
-            black_bishop.translate(-3.59f, -13.2f,-3.42f);
-            black_bishop.scale(0.007f, 0.007, 0.007f);
-            black_bishop.obj_index = BLACK_PIECE;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(black_bishop.model));
             glUniform1i(g_object_id_uniform, BLACK_PIECE);
             DrawVirtualObject("bishop");
 
-            white_queen.translate(-3.73f, -15.25f,-4.37f);
-            white_queen.scale(0.007f, 0.007, 0.007f);
-            white_queen.obj_index = WHITE_PIECE;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(white_queen.model));
             glUniform1i(g_object_id_uniform, WHITE_PIECE);
             DrawVirtualObject("queen");
 
-            black_queen.translate(-3.73f, -15.25f,-3.42f);
-            black_queen.scale(0.007f, 0.007, 0.007f);
-            black_queen.obj_index = BLACK_PIECE;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(black_queen.model));
             glUniform1i(g_object_id_uniform, BLACK_PIECE);
             DrawVirtualObject("queen");
 
-            white_king.translate(-3.86f, -18.9f,-4.37f);
-            white_king.scale(0.007f, 0.007, 0.007f);
-            white_king.obj_index = WHITE_PIECE;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(white_king.model));
             glUniform1i(g_object_id_uniform, WHITE_PIECE);
             DrawVirtualObject("king");
 
-            black_king.translate(-3.86f, -18.9f,-3.42f);
-            black_king.scale(0.007f, 0.007, 0.007f);
-            black_king.obj_index = BLACK_PIECE;
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(black_king.model));
             glUniform1i(g_object_id_uniform, BLACK_PIECE);
             DrawVirtualObject("king");
 
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(left_white_bishop.model));
+            glUniform1i(g_object_id_uniform, WHITE_PIECE);
+            DrawVirtualObject("bishop");
 
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(left_black_bishop.model));
+            glUniform1i(g_object_id_uniform, BLACK_PIECE);
+            DrawVirtualObject("bishop");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(left_white_knight.model));
+            glUniform1i(g_object_id_uniform, WHITE_PIECE);
+            DrawVirtualObject("knight");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(left_black_knight.model));
+            glUniform1i(g_object_id_uniform, BLACK_PIECE);
+            DrawVirtualObject("knight");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(left_white_rook.model));
+            glUniform1i(g_object_id_uniform, WHITE_PIECE);
+            DrawVirtualObject("rook");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(left_black_rook.model));
+            glUniform1i(g_object_id_uniform, BLACK_PIECE);
+            DrawVirtualObject("rook");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(a_white_pawn.model));
+            glUniform1i(g_object_id_uniform, WHITE_PIECE);
+            DrawVirtualObject("pawn");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(b_white_pawn.model));
+            glUniform1i(g_object_id_uniform, WHITE_PIECE);
+            DrawVirtualObject("pawn");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(c_white_pawn.model));
+            glUniform1i(g_object_id_uniform, WHITE_PIECE);
+            DrawVirtualObject("pawn");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(d_white_pawn.model));
+            glUniform1i(g_object_id_uniform, WHITE_PIECE);
+            DrawVirtualObject("pawn");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(e_white_pawn.model));
+            glUniform1i(g_object_id_uniform, WHITE_PIECE);
+            DrawVirtualObject("pawn");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(f_white_pawn.model));
+            glUniform1i(g_object_id_uniform, WHITE_PIECE);
+            DrawVirtualObject("pawn");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(g_white_pawn.model));
+            glUniform1i(g_object_id_uniform, WHITE_PIECE);
+            DrawVirtualObject("pawn");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(h_white_pawn.model));
+            glUniform1i(g_object_id_uniform, WHITE_PIECE);
+            DrawVirtualObject("pawn");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(a_black_pawn.model));
+            glUniform1i(g_object_id_uniform, BLACK_PIECE);
+            DrawVirtualObject("pawn");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(b_black_pawn.model));
+            glUniform1i(g_object_id_uniform, BLACK_PIECE);
+            DrawVirtualObject("pawn");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(c_black_pawn.model));
+            glUniform1i(g_object_id_uniform, BLACK_PIECE);
+            DrawVirtualObject("pawn");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(d_black_pawn.model));
+            glUniform1i(g_object_id_uniform, BLACK_PIECE);
+            DrawVirtualObject("pawn");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(e_black_pawn.model));
+            glUniform1i(g_object_id_uniform, BLACK_PIECE);
+            DrawVirtualObject("pawn");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(f_black_pawn.model));
+            glUniform1i(g_object_id_uniform, BLACK_PIECE);
+            DrawVirtualObject("pawn");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(g_black_pawn.model));
+            glUniform1i(g_object_id_uniform, BLACK_PIECE);
+            DrawVirtualObject("pawn");
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(h_black_pawn.model));
+            glUniform1i(g_object_id_uniform, BLACK_PIECE);
+            DrawVirtualObject("pawn");
 
 
             /* Pontos de iluminacao */
@@ -867,13 +1108,9 @@ int main(int argc, char* argv[])
             DrawVirtualObject("the_sphere");
 
             // Bowl
-            model = Matrix_Translate(-6.0f,0.2f,-4.0f) * Matrix_Rotate_X(-PI2) * Matrix_Scale(0.04,0.04,0.04) ;
-            bowl.model = model;
-            bowl.obj_index = BOWL;
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(bowl.model));
             glUniform1i(g_object_id_uniform, BOWL);
             DrawVirtualObject("10315_soup_plate");
-
         }
 
         if(is_inspecting && interactable_object.name != "NULL"){
@@ -895,10 +1132,14 @@ int main(int argc, char* argv[])
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, interactable_object.obj_index);
             DrawVirtualObject(interactable_object.name.c_str());
+
+
+            glm::vec4 vetor = glm::vec4(0,1,0,0);
+            std::cout<< dotproduct(vetor * model, camera_view_vector_mov) << std::endl;
         }
 
         if(!is_inspecting){
-            interactable_object = GetInteractableObject(objectsGroup,camera_position_c,camera_view_vector);
+            interactable_object = GetInteractableObject(objects_group,camera_position_c,camera_view_vector);
         }
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do

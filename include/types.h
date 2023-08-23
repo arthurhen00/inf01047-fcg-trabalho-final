@@ -1,5 +1,5 @@
 #include "matrices.h"
-
+#include "glm/gtx/string_cast.hpp"
 struct ObjModel
 {
     tinyobj::attrib_t                 attrib;
@@ -95,21 +95,19 @@ struct SceneObject
                                      ) ;
     }
 
+    void set_position(float x, float y, float z){
+        model[3] = glm::vec4(x,y,z,1);
+    }
+
     void translate(float x, float y, float z){
-        model = Matrix_Translate(x, y, z);
+        model = model * Matrix_Translate(x, y, z);
     }
     void scale(float x, float y, float z){
-        model = Matrix_Translate(get_bbox_center().x,
-                                 get_bbox_center().y,
-                                 get_bbox_center().z)
-              * Matrix_Scale(x, y, z);
+        model = model * Matrix_Scale(x, y, z);
     }
     void mRotate(float x, float y, float z){
-        model = Matrix_Translate(get_bbox_center().x,
-                                 get_bbox_center().y,
-                                 get_bbox_center().z)
-              * Matrix_Rotate_X(x)
-              * Matrix_Rotate_Y(y)
-              * Matrix_Rotate_Z(z);
+        model = model * Matrix_Rotate_X(x)
+                      * Matrix_Rotate_Y(y)
+                      * Matrix_Rotate_Z(z);
     }
 };

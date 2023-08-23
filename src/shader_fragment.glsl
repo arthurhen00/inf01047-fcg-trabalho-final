@@ -192,9 +192,9 @@ void main()
         V = (position_model.y - miny)/(maxy - miny);
 
         Kd = texture(TextureImage10, vec2(U,V)).rgb;
-        Ks = vec3(0.8,0.8,0.8);
+        Ks = vec3(0.2,0.2,0.2);
         Ka = Kd/2;
-        q = 32.0;
+        q = 1.0;
 
     } else if (object_id == BLACK_PIECE){
         float minx = bbox_min.x;
@@ -210,9 +210,9 @@ void main()
         V = (position_model.y - miny)/(maxy - miny);
 
         Kd = texture(TextureImage11, vec2(U,V)).rgb;
-        Ks = vec3(0.8,0.8,0.8);
+        Ks = vec3(0.2,0.2,0.2);
         Ka = Kd/2;
-        q = 32.0;
+        q = 1.0;
 
     }else if (object_id == SKYBOX){
         Kd = vec3(0.0,0.0,0.0);

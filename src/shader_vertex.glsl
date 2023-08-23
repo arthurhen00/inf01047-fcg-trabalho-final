@@ -81,8 +81,6 @@ void main()
         vec3 Ka; // Refletância ambiente
         float q; // Expoente especular para o modelo de iluminação de Phong
 
-
-
         vec4 p = position_world;
         vec4 v = normalize(camera_position - p);
         vec4 l = normalize(vec4(0.0f,5.0f,0.0f, 0.0f) - vec4(-1.0f,4.0f,0.0f, 0.0f));
@@ -94,25 +92,14 @@ void main()
 
         vec4 h = normalize(v + l);
 
-
-        float minx = bbox_min.x;
-        float maxx = bbox_max.x;
-
-        float miny = bbox_min.y;
-        float maxy = bbox_max.y;
-
-        float minz = bbox_min.z;
-        float maxz = bbox_max.z;
-
-        U = (position_model.x - minx)/(maxx - minx);
-        V = (position_model.y - miny)/(maxy - miny);
+        U = texcoords.x;
+        V = texcoords.y;
 
         Kd = texture(TextureImage9, vec2(U,V)).rgb;
         Ks= vec3(0.01,0.01,0.01);
         Ka= Kd/8;
 
         q = 32.0;
-
 
         // Espectro da luz ambiente
         vec3 Ia = vec3(0.2,0.2,0.2); // PREENCHA AQUI o espectro da luz ambiente
