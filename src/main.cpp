@@ -185,10 +185,12 @@ bool movingUp       = false;
 bool movingDown     = false;
 bool running        = false;
 bool fstAnim        = false;
+bool menu           = false;
 
 glm::vec4 camera_view_vector;
 
 glm::vec3 calculateBezierPoint(const std::vector<glm::vec3>& controlPoints, float t);
+void move_with_collision(SceneObject player, std::vector<SceneObject*> objects_group, float delta_t, float speed, glm::vec4 w, glm::vec4 u);
 
 int obj_index = 0;
 
@@ -404,19 +406,12 @@ int main(int argc, char* argv[])
     wall4.set_index(WALL_1);
     objects_to_draw.push_back(&wall4);
 
-    SceneObject esfera = g_VirtualScene.at("the_sphere");
-    esfera.set_name("esfera");
-    esfera.set_index(SPHERE);
-    objects_to_draw.push_back(&esfera);
-
     // Coelho
     SceneObject coelho = g_VirtualScene.at("the_bunny");
     coelho.set_name("coelho");
     coelho.set_position(3.0f,0.0f,3.0f);
     coelho.set_index(SPHERE);
     objects_to_draw.push_back(&coelho);
-
-    SceneObject cam_dir = g_VirtualScene.at("the_sphere");
 
     SceneObject bowl = g_VirtualScene.at("10315_soup_plate");
     bowl.set_name("bowl");
@@ -676,6 +671,8 @@ int main(int argc, char* argv[])
         }
     }
 
+    black_king.set_position(-5.0f,piece_height,-3.3f);
+
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
@@ -841,119 +838,11 @@ int main(int argc, char* argv[])
         glm::vec4 w = -camera_view_vector_mov/norm(camera_view_vector_mov);
         glm::vec4 u = crossproduct(camera_up_vector, w)/norm(crossproduct(camera_up_vector, w)); /*camera_up_vector * w;*/
 
-        bool colFX = false;
-        bool colFZ = false;
-        bool movF = false;
+        std::vector<SceneObject*> objects_group = {&room_floor, &wall1, &wall2,
+                                                &wall3, &wall4, &table, &coelho,
+                                                &chess_board, &bowl, &black_king};
 
-        bool colBX = false;
-        bool colBZ = false;
-        bool movB = false;
-
-        bool colRX = false;
-        bool colRZ = false;
-        bool movR = false;
-
-        bool colLX = false;
-        bool colLZ = false;
-        bool movL = false;
-
-        std::vector<SceneObject*> objects_group = {&room_floor, &wall1, &wall2, &wall3, &wall4, &table, &coelho, &chess_board, &esfera, &bowl};
-        for(SceneObject *i : objects_group){
-            SceneObject obj = *i;
-
-            std::cout << glm::to_string(obj.get_bbox_min()) << std::endl;
-            if(obj.has_collision() && !fstAnim){
-                float nextX = cameraX;
-                float nextZ = cameraZ;
-                SceneObject nextObjX = player;
-                SceneObject nextObjZ = player;
-                if (movingForward){
-                    movF = true;
-                    nextX += -w.x * delta_t * speed;
-                    nextZ += -w.z * delta_t * speed;
-                    nextObjX.set_position(nextX,cameraY,cameraZ);
-                    nextObjZ.set_position(cameraX,cameraY,nextZ);
-                    if(isBoundingBoxIntersection(nextObjX, obj)){
-                        colFX = true;
-                    }
-                    if(isBoundingBoxIntersection(nextObjZ, obj)){
-                        colFZ = true;
-                    }
-                }
-                 if(movingBackward){
-                    movB = true;
-                    nextX += w.x * delta_t * speed;
-                    nextZ += w.z * delta_t * speed;
-                    nextObjX.set_position(nextX,cameraY,cameraZ);
-                    nextObjZ.set_position(cameraX,cameraY,nextZ);
-                    if(isBoundingBoxIntersection(nextObjX, obj)){
-                        colBX = true;
-                    }
-                    if(isBoundingBoxIntersection(nextObjZ, obj)){
-                        colBZ = true;
-                    }
-                }
-                if(movingRight){
-                    movR = true;
-                    nextX += u.x * delta_t * speed;
-                    nextZ += u.z * delta_t * speed;
-                    nextObjX.set_position(nextX,cameraY,cameraZ);
-                    nextObjZ.set_position(cameraX,cameraY,nextZ);
-                    if(isBoundingBoxIntersection(nextObjX, obj)){
-                        colRX = true;
-                    }
-                    if(isBoundingBoxIntersection(nextObjZ, obj)){
-                        colRZ = true;
-                    }
-                }
-                if(movingLeft){
-                    movL = true;
-                    nextX += -u.x * delta_t * speed;
-                    nextZ += -u.z * delta_t * speed;
-                    nextObjX.set_position(nextX,cameraY,cameraZ);
-                    nextObjZ.set_position(cameraX,cameraY,nextZ);
-                    if(isBoundingBoxIntersection(nextObjX, obj)){
-                        colLX = true;
-                    }
-                    if(isBoundingBoxIntersection(nextObjZ, obj)){
-                        colLZ = true;
-                    }
-                }
-            }
-        }
-        // Atualizar posicao depois de fazer todos os testes
-        if(!colFX && movF){
-            cameraX += -w.x * delta_t * speed;
-        }
-        if(!colFZ && movF){
-            cameraZ += -w.z * delta_t * speed;
-        }
-        if(!colBX && movB){
-            cameraX += w.x * delta_t * speed;
-        }
-        if(!colBZ && movB){
-            cameraZ += w.z * delta_t * speed;
-        }
-        if(!colRX && movR){
-            cameraX += u.x * delta_t * speed;
-        }
-        if(!colRZ && movR){
-            cameraZ += u.z * delta_t * speed;
-        }
-        if(!colLX && movL){
-            cameraX += -u.x * delta_t * speed;
-        }
-        if(!colLZ && movL){
-            cameraZ += -u.z * delta_t * speed;
-        }
-        /* Movimentacao no Y *Testes* */
-        /*
-        if(movingUp){
-            cameraY += (u.y + 1) * delta_t * speed;
-        }
-        if(movingDown){
-            cameraY += -(u.y + 1) * delta_t * speed;
-        }*/
+        move_with_collision(player, objects_group, delta_t, speed, w, u);
 
         if (g_UsePerspectiveProjection)
         {
@@ -977,20 +866,12 @@ int main(int argc, char* argv[])
         }
 
 
-
-
         // Enviamos as matrizes "view" e "projection" para a placa de vídeo
         // (GPU). Veja o arquivo "shader_vertex.glsl", onde estas são
         // efetivamente aplicadas em todos os pontos.
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
-
-
-        /*coelho.translate(direction_anim.x, direction_anim.y, direction_anim.z);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(coelho.model));
-        glUniform1i(g_object_id_uniform, SPHERE);
-        DrawVirtualObject("the_bunny");*/
 
         if(!is_inspecting){
             // PLAYER
@@ -999,200 +880,13 @@ int main(int argc, char* argv[])
             glUniform1i(g_object_id_uniform, SPHERE);
             DrawVirtualObject("the_sphere");
 
-            // Chão principal
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(room_floor.get_model()));
-            glUniform1i(g_object_id_uniform, ROOM_FLOOR);
-            DrawVirtualObject("the_plane");
+            /* Desenha os objetos */
+            for(SceneObject *obj: objects_to_draw){
+               glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(obj->get_model()));
+                glUniform1i(g_object_id_uniform, obj->get_index());
+                DrawVirtualObject(const_cast<char*>(obj->get_model_name().c_str()));
+            }
 
-            // Parede 1
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(wall1.get_model()));
-            glUniform1i(g_object_id_uniform, WALL_1);
-            DrawVirtualObject("box.jpg");
-
-            // Parede 2
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(wall2.get_model()));
-            glUniform1i(g_object_id_uniform, WALL_1);
-            DrawVirtualObject("box.jpg");
-
-            // Parede 3
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(wall3.get_model()));
-            glUniform1i(g_object_id_uniform, WALL_1);
-            DrawVirtualObject("box.jpg");
-
-            // Parede 4
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(wall4.get_model()));
-            glUniform1i(g_object_id_uniform, WALL_1);
-            DrawVirtualObject("box.jpg");
-
-            // Mesa de canto[
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(table.get_model()));
-            glUniform1i(g_object_id_uniform, TABLE);
-            DrawVirtualObject("the_table");
-
-            // Coelho
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(coelho.get_model()));
-            glUniform1i(g_object_id_uniform, SPHERE);
-            DrawVirtualObject("the_bunny");
-
-            // Tabuleiro xadrez
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(chess_board.get_model()));
-            glUniform1i(g_object_id_uniform, CHESS);
-            DrawVirtualObject("chess_board");
-
-            //Peças
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(right_white_rook.get_model()));
-            glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("rook");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(right_black_rook.get_model()));
-            glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("rook");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(right_white_knight.get_model()));
-            glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("knight");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(right_black_knight.get_model()));
-            glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("knight");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(right_white_bishop.get_model()));
-            glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("bishop");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(right_black_bishop.get_model()));
-            glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("bishop");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(white_queen.get_model()));
-            glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("queen");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(black_queen.get_model()));
-            glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("queen");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(white_king.get_model()));
-            glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("king");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(black_king.get_model()));
-            glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("king");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(left_white_bishop.get_model()));
-            glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("bishop");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(left_black_bishop.get_model()));
-            glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("bishop");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(left_white_knight.get_model()));
-            glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("knight");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(left_black_knight.get_model()));
-            glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("knight");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(left_white_rook.get_model()));
-            glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("rook");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(left_black_rook.get_model()));
-            glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("rook");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(a_white_pawn.get_model()));
-            glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("pawn");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(b_white_pawn.get_model()));
-            glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("pawn");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(c_white_pawn.get_model()));
-            glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("pawn");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(d_white_pawn.get_model()));
-            glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("pawn");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(e_white_pawn.get_model()));
-            glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("pawn");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(f_white_pawn.get_model()));
-            glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("pawn");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(g_white_pawn.get_model()));
-            glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("pawn");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(h_white_pawn.get_model()));
-            glUniform1i(g_object_id_uniform, WHITE_PIECE);
-            DrawVirtualObject("pawn");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(a_black_pawn.get_model()));
-            glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("pawn");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(b_black_pawn.get_model()));
-            glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("pawn");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(c_black_pawn.get_model()));
-            glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("pawn");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(d_black_pawn.get_model()));
-            glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("pawn");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(e_black_pawn.get_model()));
-            glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("pawn");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(f_black_pawn.get_model()));
-            glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("pawn");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(g_black_pawn.get_model()));
-            glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("pawn");
-
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(h_black_pawn.get_model()));
-            glUniform1i(g_object_id_uniform, BLACK_PIECE);
-            DrawVirtualObject("pawn");
-
-
-            /* Pontos de iluminacao */
-            // Fonte
-            esfera.scale(0.3f, 0.3f, 0.3f);
-            esfera.set_position(0.0f,5.0f,0.0f);
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, SPHERE);
-            DrawVirtualObject("the_sphere");
-
-            // Sentido 2 <-
-            esfera.set_position(-1.0f,4.0f,0.0f);
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, SPHERE);
-            DrawVirtualObject("the_sphere");
-
-            // Sentido 3 ->
-            esfera.set_position(1.0f,4.0f,0.0f);
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, SPHERE);
-            DrawVirtualObject("the_sphere");
-
-            // Bowl
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(bowl.get_model()));
-            glUniform1i(g_object_id_uniform, BOWL);
-            DrawVirtualObject("10315_soup_plate");
         }
 
         if(is_inspecting && interactable_object != NULL){
@@ -1950,9 +1644,9 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 
     /*Coleta*/
     if(key == GLFW_KEY_F && GLFW_PRESS & is_inspecting){
-        if(interactable_object->get_name() == "bowl"){
+        if(interactable_object->get_index() == WHITE_PIECE || interactable_object->get_index() == BLACK_PIECE){
 
-            glm::mat4 model = interactable_object->get_model()
+            /*glm::mat4 model = interactable_object->get_model()
                   * Matrix_Rotate_Z(g_AngleZ)
                   * Matrix_Rotate_Y(g_AngleY)
                   * Matrix_Rotate_X(g_AngleX);
@@ -1963,9 +1657,10 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             visible_v.w = 0.0f;
 
             std::cout << dotproduct(visible_v, camera_view_vector) << std::endl;
-
-            //interactable_object->set_position(1,1,1);
-            //is_inspecting = false;
+            */
+            glm::mat4 model = pieces_initial_position.at(interactable_object->get_name());
+            interactable_object->set_position(model[3].x, model[3].y, model[3].z);
+            is_inspecting = false;
         }
 
     }
@@ -2412,6 +2107,127 @@ glm::vec3 calculateBezierPoint(const std::vector<glm::vec3>& controlPoints, floa
     }
 
     return tempPoints[0];
+}
+
+void move_with_collision(SceneObject player,
+                         std::vector<SceneObject*> objects_group,
+                         float delta_t,
+                         float speed,
+                         glm::vec4 w,
+                         glm::vec4 u){
+    bool colFX = false;
+    bool colFZ = false;
+    bool movF = false;
+
+    bool colBX = false;
+    bool colBZ = false;
+    bool movB = false;
+
+    bool colRX = false;
+    bool colRZ = false;
+    bool movR = false;
+
+    bool colLX = false;
+    bool colLZ = false;
+    bool movL = false;
+
+    for(SceneObject *i : objects_group){
+        SceneObject obj = *i;
+
+        if(obj.has_collision() && !fstAnim){
+            float nextX = cameraX;
+            float nextZ = cameraZ;
+            SceneObject nextObjX = player;
+            SceneObject nextObjZ = player;
+            if (movingForward){
+                movF = true;
+                nextX += -w.x * delta_t * speed;
+                nextZ += -w.z * delta_t * speed;
+                nextObjX.set_position(nextX,cameraY,cameraZ);
+                nextObjZ.set_position(cameraX,cameraY,nextZ);
+                if(isBoundingBoxIntersection(nextObjX, obj)){
+                    colFX = true;
+                }
+                if(isBoundingBoxIntersection(nextObjZ, obj)){
+                    colFZ = true;
+                }
+            }
+             if(movingBackward){
+                movB = true;
+                nextX += w.x * delta_t * speed;
+                nextZ += w.z * delta_t * speed;
+                nextObjX.set_position(nextX,cameraY,cameraZ);
+                nextObjZ.set_position(cameraX,cameraY,nextZ);
+                if(isBoundingBoxIntersection(nextObjX, obj)){
+                    colBX = true;
+                }
+                if(isBoundingBoxIntersection(nextObjZ, obj)){
+                    colBZ = true;
+                }
+            }
+            if(movingRight){
+                movR = true;
+                nextX += u.x * delta_t * speed;
+                nextZ += u.z * delta_t * speed;
+                nextObjX.set_position(nextX,cameraY,cameraZ);
+                nextObjZ.set_position(cameraX,cameraY,nextZ);
+                if(isBoundingBoxIntersection(nextObjX, obj)){
+                    colRX = true;
+                }
+                if(isBoundingBoxIntersection(nextObjZ, obj)){
+                    colRZ = true;
+                }
+            }
+            if(movingLeft){
+                movL = true;
+                nextX += -u.x * delta_t * speed;
+                nextZ += -u.z * delta_t * speed;
+                nextObjX.set_position(nextX,cameraY,cameraZ);
+                nextObjZ.set_position(cameraX,cameraY,nextZ);
+                if(isBoundingBoxIntersection(nextObjX, obj)){
+                    colLX = true;
+                }
+                if(isBoundingBoxIntersection(nextObjZ, obj)){
+                    colLZ = true;
+                }
+            }
+        }
+    }
+    // Atualizar posicao depois de fazer todos os testes
+    if(!colFX && movF){
+        cameraX += -w.x * delta_t * speed;
+    }
+    if(!colFZ && movF){
+        cameraZ += -w.z * delta_t * speed;
+    }
+    if(!colBX && movB){
+        cameraX += w.x * delta_t * speed;
+    }
+    if(!colBZ && movB){
+        cameraZ += w.z * delta_t * speed;
+    }
+    if(!colRX && movR){
+        cameraX += u.x * delta_t * speed;
+    }
+    if(!colRZ && movR){
+        cameraZ += u.z * delta_t * speed;
+    }
+    if(!colLX && movL){
+        cameraX += -u.x * delta_t * speed;
+    }
+    if(!colLZ && movL){
+        cameraZ += -u.z * delta_t * speed;
+    }
+
+    /* Movimentacao no Y *Testes* */
+    /*
+    if(movingUp){
+        cameraY += (u.y + 1) * delta_t * speed;
+    }
+    if(movingDown){
+        cameraY += -(u.y + 1) * delta_t * speed;
+    }*/
+
 }
 
 // set makeprg=cd\ ..\ &&\ make\ run\ >/dev/null
