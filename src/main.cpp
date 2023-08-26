@@ -188,7 +188,6 @@ bool movingDown     = false;
 bool running        = false;
 bool fstAnim        = false;
 bool collect_anim   = false;
-bool f_collect_anim = false;
 
 glm::vec4 camera_view_vector;
 
@@ -282,7 +281,13 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/bowl/Light_Oak.jpg");                           // TextureImage9
     LoadTextureImage("../../data/chess/white_piece_texture.jpg");                // TextureImage10
     LoadTextureImage("../../data/chess/black_piece_texture.jpg");                // TextureImage11
-    LoadTextureImage("../../data/console_table/textures/console-table-004-col-metalness-4k.png");                // TextureImage12
+    LoadTextureImage("../../data/console_table/textures/console-table-004-col-metalness-4k.png"); // TextureImage12
+    LoadTextureImage("../../data/sofa/textures/Hepburn_sofa_2_wire_008008136_Base_Color.png"); // TextureImage13
+    LoadTextureImage("../../data/sofa/textures/Hepburn_sofa_2_wire_008008136_Mixed_AO.png");// TextureImage14
+    LoadTextureImage("../../data/shelf/textures/shelf-040-col-metalness-4k.png");// TextureImage15
+    LoadTextureImage("../../data/shelf/textures/shelf-040-nrm-metalness-4k.png");// TextureImage16
+    LoadTextureImage("../../data/chair/textures/armless-chair-003-col-metalness-4k.png");// TextureImage17
+    LoadTextureImage("../../data/chair/textures/armless-chair-003-col-specular-4k.png");// TextureImage18
 
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
@@ -347,6 +352,22 @@ int main(int argc, char* argv[])
     ComputeNormals(&console_table_model);
     BuildTrianglesAndAddToVirtualScene(&console_table_model);
 
+    ObjModel sofa_model("../../data/sofa/sofa.obj");
+    ComputeNormals(&sofa_model);
+    BuildTrianglesAndAddToVirtualScene(&sofa_model);
+
+    ObjModel tv_model("../../data/smarttv.obj");
+    ComputeNormals(&tv_model);
+    BuildTrianglesAndAddToVirtualScene(&tv_model);
+
+    ObjModel shelf_model("../../data/shelf/shelf-040.obj");
+    ComputeNormals(&shelf_model);
+    BuildTrianglesAndAddToVirtualScene(&shelf_model);
+
+    ObjModel chair_model("../../data/chair/chair.obj");
+    ComputeNormals(&chair_model);
+    BuildTrianglesAndAddToVirtualScene(&chair_model);
+
     #define SPHERE      0
     #define BUNNY       1
     #define ROOM_FLOOR  2
@@ -359,6 +380,10 @@ int main(int argc, char* argv[])
     #define WHITE_PIECE 9
     #define BLACK_PIECE 10
     #define CONSOLE_TABLE 11
+    #define SOFA        12
+    #define TV          13
+    #define SHELF       14
+    #define CHAIR       15
 
     std::vector<SceneObject*> objects_to_draw;
 
@@ -682,6 +707,62 @@ int main(int argc, char* argv[])
     table2.set_inspectable(false);
     objects_to_draw.push_back(&table2);
 
+    SceneObject sofa = g_VirtualScene.at("Rectangle001");
+    sofa.set_name("sofa");
+    sofa.scale(0.002f, 0.002f, 0.0018f);
+    sofa.set_position(1.0f,-1.0f,2.0f);
+    sofa.mRotate(0,-PI2,0);
+    sofa.set_index(SOFA);
+    sofa.set_inspectable(false);
+    objects_to_draw.push_back(&sofa);
+
+    SceneObject shelf = g_VirtualScene.at("shelf");
+    shelf.set_name("shelf");
+    shelf.scale(7.0f,5.5f,5.5f);
+    shelf.set_position(-9.0f,-1.0f,1.2f);
+    shelf.mRotate(0,PI2,0);
+    shelf.set_index(SHELF);
+    shelf.set_inspectable(false);
+    objects_to_draw.push_back(&shelf);
+
+    SceneObject tv = g_VirtualScene.at("smart-tv_Text");
+    tv.set_name("tv");
+    tv.scale(0.5f, 0.5f, 0.5f);
+    tv.set_position(-9.0f,0.5f,1.2f);
+    tv.mRotate(0,PI2,0);
+    tv.set_index(TV);
+    objects_to_draw.push_back(&tv);
+
+    SceneObject chair1 = g_VirtualScene.at("armless-chair-003");
+    chair1.set_name("chair");
+    chair1.scale(2.2f, 2.2f, 2.2f);
+    chair1.set_position(-3.8f,-1.0f,-6.0f);
+    chair1.set_index(CHAIR);
+    objects_to_draw.push_back(&chair1);
+
+    SceneObject coelho1 = g_VirtualScene.at("the_bunny");
+    coelho1.set_name("coelho1");
+    coelho1.scale(0.5f,0.5f,0.5f);
+    coelho1.mRotate(0,PI2,0);
+    coelho1.set_position(-9.0f, -0.3f, 1.2f);
+    coelho1.set_index(BUNNY);
+    objects_to_draw.push_back(&coelho1);
+
+    SceneObject esfera1 = g_VirtualScene.at("the_sphere");
+    esfera1.scale(0.5f, 0.5f, 0.5f);
+    esfera1.set_name("esfera1");
+    esfera1.set_position(-9.0f, -0.3f, 2.6f);
+    esfera1.set_index(SPHERE);
+    objects_to_draw.push_back(&esfera1);
+
+    SceneObject esfera2 = g_VirtualScene.at("the_sphere");
+    esfera2.scale(0.5f, 0.5f, 0.5f);
+    esfera2.set_name("esfera2");
+    esfera2.set_position(-9.0f, -0.3f, -0.2f);
+    esfera2.set_index(SPHERE);
+    objects_to_draw.push_back(&esfera2);
+
+
 
 
     for(SceneObject* obj : objects_to_draw){
@@ -778,7 +859,7 @@ int main(int argc, char* argv[])
             last_inspected_obj = interactable_object;
         } else if(collect_anim){
             /* Animação de coleta */
-            glm::vec3 start_pos = glm::vec3(-3.8f,3.5f,-2.0f);
+            glm::vec3 start_pos = glm::vec3(-3.8f,3.0f,-2.0f);
             glm::vec3 final_pos = glm::vec3(-3.8f,2.0f,-3.0f);
             glm::vec3 look_at = glm::vec3(-3.8f, 0.1f, -3.9f);
             glm::vec3 med_pos = calculateBezierPoint({start_pos, final_pos}, t_bezier3);
@@ -800,12 +881,12 @@ int main(int argc, char* argv[])
                 float past_t = t - initial_t;
                 total_t += past_t;
                 initial_t = t;
-                if(total_t >= 1.0f){
+                if(total_t >= 0.5f){
                     /* coloca a peca no tabuleiro */
                     glm::mat4 piece_model = pieces_initial_position.at(last_inspected_obj->get_name());
                     last_inspected_obj->set_position(piece_model[3].x, piece_model[3].y, piece_model[3].z);
                 }
-                if(total_t >= 2.0f){
+                if(total_t >= 1.5f){
                     /* Sai da animação*/
                     cameraX = old_camera_x;
                     cameraY = old_camera_y;
@@ -905,7 +986,8 @@ int main(int argc, char* argv[])
         std::vector<SceneObject*> objects_group = {&room_floor, &wall1, &wall2,
                                                 &wall3, &wall4, &table, &coelho,
                                                 &chess_board, &bowl, &black_king, &black_queen,
-                                                &table2, &white_king, &white_queen};
+                                                &table2, &white_king, &white_queen, &sofa,
+                                                &shelf, &tv, &chair1};
 
         move_with_collision(player, objects_group, delta_t, speed, w, u);
 
@@ -963,6 +1045,7 @@ int main(int argc, char* argv[])
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, SKYBOX);
             DrawVirtualObject("skybox");
+
             glEnable(GL_CULL_FACE);
             glEnable(GL_DEPTH_TEST);
 
@@ -973,6 +1056,19 @@ int main(int argc, char* argv[])
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, interactable_object->get_index());
             DrawVirtualObject(interactable_object->get_model_name().c_str());
+
+            if(interactable_object->get_name() == "bowl"){
+                glm::mat4 inspec_model = bowl.get_model()
+                * Matrix_Scale(0.2f, 0.2f, 0.2f)
+                * Matrix_Translate(0.0f, 20.0f, 0.0f)
+                * Matrix_Rotate_Z(g_AngleZ)
+                * Matrix_Rotate_Y(g_AngleY)
+                * Matrix_Rotate_X(g_AngleX + PI2);
+                glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(inspec_model));
+                glUniform1i(g_object_id_uniform, white_king.get_index());
+                DrawVirtualObject(white_king.get_model_name().c_str());
+            }
+
         }
 
         if(!is_inspecting){
@@ -1098,6 +1194,14 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage10"), 10);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage11"), 11);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage12"), 12);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage13"), 13);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage14"), 14);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage15"), 15);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage16"), 16);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage17"), 17);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage18"), 18);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage19"), 19);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage20"), 20);
     glUseProgram(0);
 }
 
@@ -1712,7 +1816,20 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     if(key == GLFW_KEY_F && GLFW_PRESS & is_inspecting){
         if(interactable_object->get_index() == WHITE_PIECE || interactable_object->get_index() == BLACK_PIECE){
 
-            /*glm::mat4 model = interactable_object->get_model()
+            old_camera_x = cameraX;
+            old_camera_y = cameraY;
+            old_camera_z = cameraZ;
+
+
+            is_inspecting = false;
+            collect_anim = true;
+        } else if(interactable_object->get_name() == "bowl"){
+
+            old_camera_x = cameraX;
+            old_camera_y = cameraY;
+            old_camera_z = cameraZ;
+
+            glm::mat4 model = interactable_object->get_model()
                   * Matrix_Rotate_Z(g_AngleZ)
                   * Matrix_Rotate_Y(g_AngleY)
                   * Matrix_Rotate_X(g_AngleX);
@@ -1721,17 +1838,12 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             glm::vec4 visible_v = (bowl_up * model);
 
             visible_v.w = 0.0f;
-
             std::cout << dotproduct(visible_v, camera_view_vector) << std::endl;
-            */
-
-            old_camera_x = cameraX;
-            old_camera_y = cameraY;
-            old_camera_z = cameraZ;
+            if(dotproduct(visible_v, camera_view_vector) > cos(PI) ){
+                std::cout << "olhando" << std::endl;
+            }
 
 
-            is_inspecting = false;
-            collect_anim = true;
         }
 
     }

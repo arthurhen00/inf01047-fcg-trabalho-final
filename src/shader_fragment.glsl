@@ -32,6 +32,10 @@ uniform mat4 projection;
 #define WHITE_PIECE 9
 #define BLACK_PIECE 10
 #define CONSOLE_TABLE 11
+#define SOFA        12
+#define TV          13
+#define SHELF       14
+#define CHAIR       15
 
 uniform int object_id;
 
@@ -56,6 +60,11 @@ uniform sampler2D TextureImage12;
 uniform sampler2D TextureImage13;
 uniform sampler2D TextureImage14;
 uniform sampler2D TextureImage15;
+uniform sampler2D TextureImage16;
+uniform sampler2D TextureImage17;
+uniform sampler2D TextureImage18;
+uniform sampler2D TextureImage19;
+uniform sampler2D TextureImage20;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -109,13 +118,13 @@ void main()
 
     if ( object_id == SPHERE ){
 
+        float raio = 1;
         vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
-        vec4 pl = bbox_center + (position_model - bbox_center)/length((position_model - bbox_center));
+        vec4 pl = bbox_center + raio*(position_model - bbox_center)/length(position_model - bbox_center);
 
-        vec4 vectorp =  pl - bbox_center;
-
-        float theta = atan(vectorp.x,vectorp.z);
-        float phi = asin(vectorp.y);
+        vec4 p2  = pl - bbox_center;
+        float theta = atan( p2.x, p2.z );
+        float phi   = asin( p2.y/raio );
 
         U = (theta + M_PI) / (2 * M_PI);
         V = (phi + M_PI_2) / M_PI;
@@ -126,17 +135,11 @@ void main()
         Ka = Kd/2;
         q = 1.0;
     } else if ( object_id == BUNNY ){
-        float minx = bbox_min.x;
-        float maxx = bbox_max.x;
+        float uR = 1;
+        float vR = 0.2;
 
-        float miny = bbox_min.y;
-        float maxy = bbox_max.y;
-
-        float minz = bbox_min.z;
-        float maxz = bbox_max.z;
-
-        U = (position_model.x - minx)/(maxx - minx);
-        V = (position_model.y - miny)/(maxy - miny);
+        U = position_model.x * uR - floor(position_model.x * uR);
+        V = position_model.y * vR - floor(position_model.y * vR);
 
         Kd = texture(TextureImage0, vec2(U,V)).rgb;
         Ks = vec3(0.8,0.8,0.8);
@@ -231,9 +234,38 @@ void main()
         V = texcoords.y;
 
         Kd = texture(TextureImage12, vec2(U,V)).rgb;
-        Ks = vec3(0.0,0.0,0.0);
+        Ks = vec3(0.01,0.01,0.01);
         Ka = Kd;
         q = 1.0;
+    } else if(object_id == SOFA){
+        U = texcoords.x;
+        V = texcoords.y;
+
+        Kd = texture(TextureImage13, vec2(U,V)).rgb * texture(TextureImage14, vec2(U,V)).rgb;
+        Ks = vec3(0,0,0);
+        Ka = Kd/3;
+        q = 1.0f;
+    } else if(object_id == TV){
+        Kd = vec3(0.01f,0.01f,0.01f);
+        Ks = vec3(0.02f,0.02f,0.02f);
+        Ka = vec3(0,0,0);
+        q = 1.0;
+    } else if(object_id == SHELF){
+        U = texcoords.x;
+        V = texcoords.y;
+
+        Kd = texture(TextureImage15, vec2(U,V)).rgb;
+        Ks = vec3(0.01f,0.01f,0.01f);
+        Ka = Kd/6;
+        q = 1.0f;
+    } else if(object_id == CHAIR){
+        U = texcoords.x;
+        V = texcoords.y;
+
+        Kd = texture(TextureImage17, vec2(U,V)).rgb;
+        Ks = texture(TextureImage18, vec2(U,V)).rgb;
+        Ka = Kd/6;
+        q = 1.0f;
     } else {
         Kd = vec3(0.0,0.0,0.0);
         Ks = vec3(0.0,0.0,0.0);

@@ -3734,7 +3734,7 @@
 	<inttypes.h>
 	<stdint.h>
 
-1693010188 source:c:\users\arthu\desktop\ufrgs\5_semestre\fcg\inf01047-fcg-trabalho-final\src\main.cpp
+1693090211 source:c:\users\arthu\desktop\ufrgs\5_semestre\fcg\inf01047-fcg-trabalho-final\src\main.cpp
 	<cmath>
 	<cstdio>
 	<cstdlib>
@@ -4615,7 +4615,7 @@
 	<array>
 	"mapbox/earcut.hpp"
 
-1692979550 c:\users\arthu\desktop\ufrgs\5_semestre\fcg\inf01047-fcg-trabalho-final\include\types.h
+1693015254 c:\users\arthu\desktop\ufrgs\5_semestre\fcg\inf01047-fcg-trabalho-final\include\types.h
 	"matrices.h"
 	"glm/gtx/string_cast.hpp"
 
