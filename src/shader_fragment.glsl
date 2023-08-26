@@ -31,6 +31,7 @@ uniform mat4 projection;
 #define BOWL        8
 #define WHITE_PIECE 9
 #define BLACK_PIECE 10
+#define CONSOLE_TABLE 11
 
 uniform int object_id;
 
@@ -51,6 +52,10 @@ uniform sampler2D TextureImage8;
 uniform sampler2D TextureImage9;
 uniform sampler2D TextureImage10;
 uniform sampler2D TextureImage11;
+uniform sampler2D TextureImage12;
+uniform sampler2D TextureImage13;
+uniform sampler2D TextureImage14;
+uniform sampler2D TextureImage15;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -220,7 +225,16 @@ void main()
         Ka = vec3(0.0,0.0,0.0);
         q = 32.0;
 
-    } else{
+    } else if(object_id == CONSOLE_TABLE){
+
+        U = texcoords.x;
+        V = texcoords.y;
+
+        Kd = texture(TextureImage12, vec2(U,V)).rgb;
+        Ks = vec3(0.0,0.0,0.0);
+        Ka = Kd;
+        q = 1.0;
+    } else {
         Kd = vec3(0.0,0.0,0.0);
         Ks = vec3(0.0,0.0,0.0);
         Ka = vec3(0.0,0.0,0.0);

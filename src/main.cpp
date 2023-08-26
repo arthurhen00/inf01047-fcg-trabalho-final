@@ -172,11 +172,13 @@ GLint g_bbox_max_uniform;
 
 
 SceneObject *interactable_object;
+SceneObject *last_inspected_obj;
 bool is_inspecting = false;
 // Variaveis da free cam
 float cameraX = 7.5f;
 float cameraY = 1.0f;
 float cameraZ = -1.0f;
+float old_camera_x, old_camera_y, old_camera_z;
 bool movingForward  = false;
 bool movingBackward = false;
 bool movingLeft     = false;
@@ -185,7 +187,8 @@ bool movingUp       = false;
 bool movingDown     = false;
 bool running        = false;
 bool fstAnim        = false;
-bool menu           = false;
+bool collect_anim   = false;
+bool f_collect_anim = false;
 
 glm::vec4 camera_view_vector;
 
@@ -279,6 +282,7 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/bowl/Light_Oak.jpg");                           // TextureImage9
     LoadTextureImage("../../data/chess/white_piece_texture.jpg");                // TextureImage10
     LoadTextureImage("../../data/chess/black_piece_texture.jpg");                // TextureImage11
+    LoadTextureImage("../../data/console_table/textures/console-table-004-col-metalness-4k.png");                // TextureImage12
 
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
@@ -339,6 +343,9 @@ int main(int argc, char* argv[])
     ComputeNormals(&bowl_model);
     BuildTrianglesAndAddToVirtualScene(&bowl_model);
 
+    ObjModel console_table_model("../../data/console_table/console-table-004.obj");
+    ComputeNormals(&console_table_model);
+    BuildTrianglesAndAddToVirtualScene(&console_table_model);
 
     #define SPHERE      0
     #define BUNNY       1
@@ -351,6 +358,7 @@ int main(int argc, char* argv[])
     #define BOWL        8
     #define WHITE_PIECE 9
     #define BLACK_PIECE 10
+    #define CONSOLE_TABLE 11
 
     std::vector<SceneObject*> objects_to_draw;
 
@@ -409,7 +417,8 @@ int main(int argc, char* argv[])
     // Coelho
     SceneObject coelho = g_VirtualScene.at("the_bunny");
     coelho.set_name("coelho");
-    coelho.set_position(3.0f,0.0f,3.0f);
+    coelho.scale(0.3f, 0.3f, 0.3f);
+    coelho.set_position(5.5f,0.25f,-6.0f);
     coelho.set_index(SPHERE);
     objects_to_draw.push_back(&coelho);
 
@@ -665,6 +674,16 @@ int main(int argc, char* argv[])
     h_black_pawn.set_index(BLACK_PIECE);
     objects_to_draw.push_back(&h_black_pawn);
 
+    SceneObject table2 = g_VirtualScene.at("console-table");
+    table2.set_name("console_table");
+    table2.scale(3.0f, 2.5f, 2.5f);
+    table2.set_position(5.0f,-1.0f,-6.0f);
+    table2.set_index(CONSOLE_TABLE);
+    table2.set_inspectable(false);
+    objects_to_draw.push_back(&table2);
+
+
+
     for(SceneObject* obj : objects_to_draw){
         if(obj->get_index() == WHITE_PIECE || obj->get_index() == BLACK_PIECE){
             pieces_initial_position.insert(std::make_pair(obj->get_name(),obj->get_model()));
@@ -672,6 +691,9 @@ int main(int argc, char* argv[])
     }
 
     black_king.set_position(-5.0f,piece_height,-3.3f);
+    black_queen.set_position(-5.5f,piece_height,-3.3f);
+    white_king.set_position(5.5f,piece_height+0.8f,-5.8f);
+    white_queen.set_position(5.0f,piece_height-0.3f,-5.8f);
 
     if ( argc > 1 )
     {
@@ -692,12 +714,13 @@ int main(int argc, char* argv[])
 
     float speed = 5.0f; // Velocidade da câmera
     float prev_time = (float)glfwGetTime();
-    float prev_time_anim = (float)glfwGetTime();
 
     float anim_speed = 2000;
     float t_bezier = 0.0f;
     float t_bezier2 = 0.0f;
+    float t_bezier3 = 0.0f;
     float total_t = 0;
+    float initial_t = 0;
 
 
     glm::mat4 model = Matrix_Identity();
@@ -752,11 +775,49 @@ int main(int argc, char* argv[])
             glm::vec4 vec = glm::normalize(glm::vec4(0.0f,0.0f,1.0f,0.0f)) * g_CameraDistance;
             camera_position_c  = bbox_center + vec;
             camera_view_vector = bbox_center - camera_position_c;
+            last_inspected_obj = interactable_object;
+        } else if(collect_anim){
+            /* Animação de coleta */
+            glm::vec3 start_pos = glm::vec3(-3.8f,3.5f,-2.0f);
+            glm::vec3 final_pos = glm::vec3(-3.8f,2.0f,-3.0f);
+            glm::vec3 look_at = glm::vec3(-3.8f, 0.1f, -3.9f);
+            glm::vec3 med_pos = calculateBezierPoint({start_pos, final_pos}, t_bezier3);
+
+            cameraX = med_pos.x;
+            cameraY = med_pos.y;
+            cameraZ = med_pos.z;
+
+            camera_view_vector = glm::vec4(look_at.x, look_at.y, look_at.z, 0) -
+                                    glm::vec4(med_pos.x, med_pos.y, med_pos.z, 0);
+
+            if(t_bezier3 <= 1.0f){
+                t_bezier3 += 1.0f * delta_t;
+            } else {
+                if(total_t == 0){
+                    initial_t = (float)glfwGetTime();
+                }
+                float t = (float)glfwGetTime();
+                float past_t = t - initial_t;
+                total_t += past_t;
+                initial_t = t;
+                if(total_t >= 1.0f){
+                    /* coloca a peca no tabuleiro */
+                    glm::mat4 piece_model = pieces_initial_position.at(last_inspected_obj->get_name());
+                    last_inspected_obj->set_position(piece_model[3].x, piece_model[3].y, piece_model[3].z);
+                }
+                if(total_t >= 2.0f){
+                    /* Sai da animação*/
+                    cameraX = old_camera_x;
+                    cameraY = old_camera_y;
+                    cameraZ = old_camera_z;
+                    total_t = 0;
+                    t_bezier3 = 0;
+                    collect_anim = false;
+                }
+            }
+
         } else if(fstAnim){
             /* Animação inicial */
-            float delta_t_anim = current_time - prev_time_anim;
-            prev_time_anim = current_time;
-
             glm::vec3 ponto1 = glm::vec3( 7.5f, 1.0f, -1.0f);
             glm::vec3 ponto2 = glm::vec3( 5.5f, 1.0f,  2.0f);
             glm::vec3 ponto3 = glm::vec3( 2.5f, 3.0f, -1.0f);
@@ -782,25 +843,27 @@ int main(int argc, char* argv[])
 
             if(t_bezier <= 1.0f){
                 if(t_bezier < 0.2f){
-                    t_bezier += 0.0001f * delta_t_anim * anim_speed;
+                    t_bezier += 0.0001f * delta_t * anim_speed;
                 }else if(t_bezier > 0.7f){
-                    t_bezier += 0.00002f * delta_t_anim * anim_speed;
+                    t_bezier += 0.00002f * delta_t * anim_speed;
                 } else if(t_bezier > 0.9f){
-                    t_bezier += 0.00001f * delta_t_anim * anim_speed;
+                    t_bezier += 0.00001f * delta_t * anim_speed;
                 } else {
-                    t_bezier += 0.0001f * delta_t_anim * anim_speed;
+                    t_bezier += 0.0001f * delta_t * anim_speed;
                 }
             }
             if(t_bezier2 <= 1.0f){
                     if(t_bezier2 > 0.8f){
-                        t_bezier2 += 0.00003f * delta_t_anim * anim_speed;
+                        t_bezier2 += 0.00003f * delta_t * anim_speed;
                     } else {
-                        t_bezier2 += 0.00015f * delta_t_anim * anim_speed;
+                        t_bezier2 += 0.00015f * delta_t * anim_speed;
                     }
             }
 
             if(t_bezier >= 1.0f){
-                static float initial_t = (float)glfwGetTime();
+                if(total_t == 0){
+                    initial_t = (float)glfwGetTime();
+                }
                 float t = (float)glfwGetTime();
                 float past_t = t - initial_t;
                 total_t += past_t;
@@ -811,6 +874,7 @@ int main(int argc, char* argv[])
                     cameraY = 1.0f;
                     cameraZ = -1.0f;
                     camera_view_vector = -glm::vec4(x, y, z, 0.0f);
+                    total_t = 0;
                 }
             }
         } else {
@@ -840,7 +904,8 @@ int main(int argc, char* argv[])
 
         std::vector<SceneObject*> objects_group = {&room_floor, &wall1, &wall2,
                                                 &wall3, &wall4, &table, &coelho,
-                                                &chess_board, &bowl, &black_king};
+                                                &chess_board, &bowl, &black_king, &black_queen,
+                                                &table2, &white_king, &white_queen};
 
         move_with_collision(player, objects_group, delta_t, speed, w, u);
 
@@ -1032,6 +1097,7 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage9"), 9);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage10"), 10);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage11"), 11);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage12"), 12);
     glUseProgram(0);
 }
 
@@ -1515,7 +1581,7 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         if(is_inspecting){
             g_AngleX += 0.002*dx;
             g_AngleY += 0.002*dy;
-        }else if(!fstAnim){
+        }else if(!fstAnim && !collect_anim){
             // Atualizamos parâmetros da câmera com os deslocamentos
             g_CameraTheta -= 0.01f*dx;
             g_CameraPhi   += 0.01f*dy;
@@ -1633,7 +1699,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         fflush(stdout);
     }
 
-    if(key == GLFW_KEY_E && action == GLFW_PRESS){
+    if(key == GLFW_KEY_E && action == GLFW_PRESS && !fstAnim && !collect_anim){
         if(interactable_object != NULL && !is_inspecting){
             is_inspecting = true;
             g_AngleX = 0.0;
@@ -1658,9 +1724,14 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 
             std::cout << dotproduct(visible_v, camera_view_vector) << std::endl;
             */
-            glm::mat4 model = pieces_initial_position.at(interactable_object->get_name());
-            interactable_object->set_position(model[3].x, model[3].y, model[3].z);
+
+            old_camera_x = cameraX;
+            old_camera_y = cameraY;
+            old_camera_z = cameraZ;
+
+
             is_inspecting = false;
+            collect_anim = true;
         }
 
     }
@@ -2134,7 +2205,7 @@ void move_with_collision(SceneObject player,
     for(SceneObject *i : objects_group){
         SceneObject obj = *i;
 
-        if(obj.has_collision() && !fstAnim){
+        if(obj.has_collision() && !fstAnim && !collect_anim){
             float nextX = cameraX;
             float nextZ = cameraZ;
             SceneObject nextObjX = player;
@@ -2220,13 +2291,32 @@ void move_with_collision(SceneObject player,
     }
 
     /* Movimentacao no Y *Testes* */
-    /*
+
     if(movingUp){
         cameraY += (u.y + 1) * delta_t * speed;
     }
     if(movingDown){
         cameraY += -(u.y + 1) * delta_t * speed;
-    }*/
+    }
+
+}
+
+void collect_piece_anim(float t_bezier3){
+
+    /* Funcao para animação de coleta */
+
+    glm::vec3 start_pos = glm::vec3(-3.8f,4,-4.5f);
+    glm::vec3 final_pos = glm::vec3(-3.8f,2,-4.0f);
+
+    glm::vec3 look_at = glm::vec3(-3.8f, 1, 4.0f);
+
+    glm::vec3 med_pos = calculateBezierPoint({start_pos, final_pos}, t_bezier3);
+
+    cameraX = med_pos.x;
+    cameraY = med_pos.y;
+    cameraZ = med_pos.z;
+
+
 
 }
 
