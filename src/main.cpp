@@ -285,9 +285,11 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/sofa/textures/Hepburn_sofa_2_wire_008008136_Base_Color.png"); // TextureImage13
     LoadTextureImage("../../data/sofa/textures/Hepburn_sofa_2_wire_008008136_Mixed_AO.png");// TextureImage14
     LoadTextureImage("../../data/shelf/textures/shelf-040-col-metalness-4k.png");// TextureImage15
-    LoadTextureImage("../../data/shelf/textures/shelf-040-nrm-metalness-4k.png");// TextureImage16
+    LoadTextureImage("../../data/bed/textures/M_bed_BaseColor.png");// TextureImage16
     LoadTextureImage("../../data/chair/textures/armless-chair-003-col-metalness-4k.png");// TextureImage17
     LoadTextureImage("../../data/chair/textures/armless-chair-003-col-specular-4k.png");// TextureImage18
+    LoadTextureImage("../../data/bookshelf/textures/bookshelf-031-col-metalness-4k.png");// TextureImage19
+    LoadTextureImage("../../data/bookshelf/textures/books.jpg");// TextureImage20
 
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
@@ -368,6 +370,14 @@ int main(int argc, char* argv[])
     ComputeNormals(&chair_model);
     BuildTrianglesAndAddToVirtualScene(&chair_model);
 
+    ObjModel bed_model("../../data/bed/Old_bed.obj");
+    ComputeNormals(&bed_model);
+    BuildTrianglesAndAddToVirtualScene(&bed_model);
+
+    ObjModel bookshelf_model("../../data/bookshelf/bookshelf-031.obj");
+    ComputeNormals(&bookshelf_model);
+    BuildTrianglesAndAddToVirtualScene(&bookshelf_model);
+
     #define SPHERE      0
     #define BUNNY       1
     #define ROOM_FLOOR  2
@@ -384,6 +394,9 @@ int main(int argc, char* argv[])
     #define TV          13
     #define SHELF       14
     #define CHAIR       15
+    #define BED         16
+    #define BOOK_SHELF  17
+    #define BOOKS       18
 
     std::vector<SceneObject*> objects_to_draw;
 
@@ -762,8 +775,36 @@ int main(int argc, char* argv[])
     esfera2.set_index(SPHERE);
     objects_to_draw.push_back(&esfera2);
 
+    SceneObject bed = g_VirtualScene.at("old_bed");
+    bed.scale(0.013f, 0.013f, 0.013f);
+    bed.mRotate(0,-PI2,0);
+    bed.set_name("bed");
+    bed.set_position(8.0f, -1.0f, -5.0f);
+    bed.set_index(BED);
+    objects_to_draw.push_back(&bed);
 
+    SceneObject book_shelf = g_VirtualScene.at("bookshelf-031");
+    book_shelf.set_name("bookshelf");
+    book_shelf.scale(2.0f, 2.0f, 2.0f);
+    book_shelf.mRotate(0,PI,0);
+    book_shelf.set_position(-6.5f, -1.0f, 7.0f);
+    book_shelf.set_index(BOOK_SHELF);
+    book_shelf.set_inspectable(false);
+    objects_to_draw.push_back(&book_shelf);
 
+    SceneObject pack_book1 = g_VirtualScene.at("box.jpg");
+    pack_book1.set_name("books");
+    pack_book1.scale(0.6f, 0.35f, 0.4f);
+    pack_book1.set_position(-7.2f, 0.38f, 7.0f);
+    pack_book1.set_index(BOOKS);
+    objects_to_draw.push_back(&pack_book1);
+
+    SceneObject pack_book2 = g_VirtualScene.at("box.jpg");
+    pack_book2.set_name("books");
+    pack_book2.scale(0.6f, 0.35f, 0.4f);
+    pack_book2.set_position(-7.0f, 1.38f, 7.0f);
+    pack_book2.set_index(BOOKS);
+    objects_to_draw.push_back(&pack_book2);
 
     for(SceneObject* obj : objects_to_draw){
         if(obj->get_index() == WHITE_PIECE || obj->get_index() == BLACK_PIECE){
@@ -987,7 +1028,9 @@ int main(int argc, char* argv[])
                                                 &wall3, &wall4, &table, &coelho,
                                                 &chess_board, &bowl, &black_king, &black_queen,
                                                 &table2, &white_king, &white_queen, &sofa,
-                                                &shelf, &tv, &chair1};
+                                                &shelf, &tv, &chair1, &coelho1, &esfera1,
+                                                &esfera2, &bed, &book_shelf, &pack_book1,
+                                                &pack_book2 };
 
         move_with_collision(player, objects_group, delta_t, speed, w, u);
 

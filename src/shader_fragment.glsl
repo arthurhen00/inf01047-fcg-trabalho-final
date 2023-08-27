@@ -36,6 +36,9 @@ uniform mat4 projection;
 #define TV          13
 #define SHELF       14
 #define CHAIR       15
+#define BED         16
+#define BOOK_SHELF  17
+#define BOOKS       18
 
 uniform int object_id;
 
@@ -265,6 +268,33 @@ void main()
         Kd = texture(TextureImage17, vec2(U,V)).rgb;
         Ks = texture(TextureImage18, vec2(U,V)).rgb;
         Ka = Kd/6;
+        q = 1.0f;
+    } else if(object_id == BED){
+        U = texcoords.x;
+        V = texcoords.y;
+
+        Kd = texture(TextureImage16, vec2(U,V)).rgb;
+        Ks = vec3(0.0f,0.0f,0.0f);
+        Ka = Kd;
+        q = 1.0f;
+    } else if(object_id == BOOK_SHELF){
+        U = texcoords.x;
+        V = texcoords.y;
+
+        Kd = texture(TextureImage19, vec2(U,V)).rgb;
+        Ks = vec3(0.0f,0.0f,0.0f);
+        Ka = Kd/2;
+        q = 1.0f;
+    } else if(object_id == BOOKS){
+        float uR = 0.4;
+        float vR = 0.7;
+
+        U = position_model.x * uR - floor(position_model.x * uR);
+        V = position_model.y * vR + 0.5;
+
+        Kd = texture(TextureImage20, vec2(U,V)).rgb;
+        Ks = vec3(0.0f,0.0f,0.0f);
+        Ka = Kd/2;
         q = 1.0f;
     } else {
         Kd = vec3(0.0,0.0,0.0);
