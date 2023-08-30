@@ -173,6 +173,14 @@ struct SceneObject
         model[3] = glm::vec4(x,y,z,1);
     }
 
+    void set_position(glm::vec4 position){
+        model[3] = position;
+    }
+
+    glm::vec4 get_position(){
+        return model[3];
+    }
+
     void translate(float x, float y, float z){
         model = model * Matrix_Translate(x, y, z);
     }

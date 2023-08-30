@@ -62,6 +62,7 @@
 
 #define PI  3.14159265359
 #define PI2 1.57079632679
+#define PI4 0.78539816339
 
 // Declaração de funções utilizadas para pilha de matrizes de modelagem.
 void PushMatrix(glm::mat4 M);
@@ -814,7 +815,8 @@ int main(int argc, char* argv[])
 
     black_king.set_position(-5.0f,piece_height,-3.3f);
     black_queen.set_position(-5.5f,piece_height,-3.3f);
-    white_king.set_position(5.5f,piece_height+0.8f,-5.8f);
+    white_king.set_position(-6.0f,piece_height+0.1,-3.90f);
+    white_king.mRotate(-PI2,0.0f,0.0f);
     white_queen.set_position(5.0f,piece_height-0.3f,-5.8f);
 
     if ( argc > 1 )
@@ -1072,7 +1074,7 @@ int main(int argc, char* argv[])
 
             /* Desenha os objetos */
             for(SceneObject *obj: objects_to_draw){
-               glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(obj->get_model()));
+                glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(obj->get_model()));
                 glUniform1i(g_object_id_uniform, obj->get_index());
                 DrawVirtualObject(const_cast<char*>(obj->get_model_name().c_str()));
             }
@@ -1092,22 +1094,33 @@ int main(int argc, char* argv[])
             glEnable(GL_CULL_FACE);
             glEnable(GL_DEPTH_TEST);
 
-            model = interactable_object->get_model()
-                  * Matrix_Rotate_Z(g_AngleZ)
-                  * Matrix_Rotate_Y(g_AngleY)
-                  * Matrix_Rotate_X(g_AngleX);
+            model = Matrix_Translate(interactable_object->get_position().x,
+                                         interactable_object->get_position().y,
+                                         interactable_object->get_position().z)
+                      * Matrix_Rotate_Z(g_AngleZ)
+                      * Matrix_Rotate_Y(g_AngleY)
+                      * Matrix_Rotate_X(g_AngleX)
+                      * Matrix_Translate(-interactable_object->get_position().x,
+                                         -interactable_object->get_position().y,
+                                         -interactable_object->get_position().z)
+                      * interactable_object->get_model();
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, interactable_object->get_index());
             DrawVirtualObject(interactable_object->get_model_name().c_str());
 
             if(interactable_object->get_name() == "bowl"){
-                glm::mat4 inspec_model = bowl.get_model()
-                * Matrix_Scale(0.2f, 0.2f, 0.2f)
-                * Matrix_Translate(0.0f, 20.0f, 0.0f)
-                * Matrix_Rotate_Z(g_AngleZ)
-                * Matrix_Rotate_Y(g_AngleY)
-                * Matrix_Rotate_X(g_AngleX + PI2);
-                glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(inspec_model));
+
+                model = Matrix_Translate(interactable_object->get_position().x,
+                                         interactable_object->get_position().y,
+                                         interactable_object->get_position().z)
+                      * Matrix_Rotate_Z(g_AngleZ)
+                      * Matrix_Rotate_Y(g_AngleY)
+                      * Matrix_Rotate_X(g_AngleX)
+                      * Matrix_Translate(-interactable_object->get_position().x,
+                                         -interactable_object->get_position().y,
+                                         -interactable_object->get_position().z)
+                      * white_king.get_model();
+                glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
                 glUniform1i(g_object_id_uniform, white_king.get_index());
                 DrawVirtualObject(white_king.get_model_name().c_str());
             }
@@ -1150,6 +1163,7 @@ int main(int argc, char* argv[])
     // Fim do programa
     return 0;
 }
+
 
 
 
