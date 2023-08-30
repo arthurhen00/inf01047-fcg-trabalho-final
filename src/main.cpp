@@ -184,14 +184,14 @@ float cameraX = 7.5f;
 float cameraY = 1.0f;
 float cameraZ = -1.0f;
 float old_camera_x, old_camera_y, old_camera_z;
-bool movingForward  = false;
-bool movingBackward = false;
-bool movingLeft     = false;
-bool movingRight    = false;
-bool movingUp       = false;
-bool movingDown     = false;
+bool moving_forward  = false;
+bool moving_backwards = false;
+bool moving_left     = false;
+bool moving_right    = false;
+bool moving_up       = false;
+bool moving_down     = false;
 bool running        = false;
-bool fstAnim        = false;
+bool fst_anim        = false;
 bool collect_anim   = false;
 
 glm::vec4 camera_view_vector;
@@ -277,8 +277,8 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");      // TextureImage0
     LoadTextureImage("../../data/tc-earth_nightmap_citylights.gif"); // TextureImage1
     LoadTextureImage("../../data/box/texture.jpg");                  // TextureImage2
-    LoadTextureImage("../../data/texture/floor/dark_wooden_planks_diff_1k.jpg"); // TextureImage3
-    LoadTextureImage("../../data/texture/floor/dark_wooden_planks_disp_1k.png"); // TextureImage4
+    LoadTextureImage("../../data/texture/floor/plywood.jpg"); // TextureImage3
+    LoadTextureImage("../../data/texture/floor/plywood rough.jpg"); // TextureImage4
     LoadTextureImage("../../data/texture/wall_1/wood_trunk_wall_diff_1k.jpg");   // TextureImage5
     LoadTextureImage("../../data/texture/wall_1/wood_trunk_wall_disp_1k.png");   // TextureImage6
     LoadTextureImage("../../data/table/texture.jpg");                            // TextureImage7
@@ -295,6 +295,7 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/chair/textures/armless-chair-003-col-specular-4k.png");// TextureImage18
     LoadTextureImage("../../data/bookshelf/textures/bookshelf-031-col-metalness-4k.png");// TextureImage19
     LoadTextureImage("../../data/bookshelf/textures/books.jpg");// TextureImage20
+    LoadTextureImage("../../data/texture/ceiling/ceiling.jpg"); // TextureImage21
 
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
@@ -320,7 +321,7 @@ int main(int argc, char* argv[])
     #define BED         16
     #define BOOK_SHELF  17
     #define BOOKS       18
-
+    #define ROOM_CEILING 19
 
 
     /* Criacao de objetos */
@@ -338,6 +339,17 @@ int main(int argc, char* argv[])
     room_floor.set_inspectable(false);
     room_floor.set_index(ROOM_FLOOR);
     objects_to_draw.push_back(&room_floor);
+
+    // Teto
+    SceneObject room_ceiling = g_VirtualScene.at("the_plane");
+    room_ceiling.set_name("ceiling");
+    room_ceiling.set_position(0.0f, +3.7f, 0.0f);
+    room_ceiling.scale(10.0f, 1.0f, 8.0f);
+    room_ceiling.mRotate(PI,0,0);
+    room_ceiling.set_collision(false);
+    room_ceiling.set_inspectable(false);
+    room_ceiling.set_index(ROOM_CEILING);
+    objects_to_draw.push_back(&room_ceiling);
 
     SceneObject wall1 = g_VirtualScene.at("box.jpg");
     wall1.set_name("wall_1");
@@ -861,7 +873,7 @@ int main(int argc, char* argv[])
                 }
             }
 
-        } else if(fstAnim){
+        } else if(fst_anim){
             /* Animação inicial */
             glm::vec3 ponto1 = glm::vec3( 7.5f, 1.0f, -1.0f);
             glm::vec3 ponto2 = glm::vec3( 5.5f, 1.0f,  2.0f);
@@ -914,7 +926,7 @@ int main(int argc, char* argv[])
                 total_t += past_t;
                 initial_t = t;
                 if(total_t > 2.0f){
-                    fstAnim = false;
+                    fst_anim = false;
                     cameraX = 7.5f;;
                     cameraY = 1.0f;
                     cameraZ = -1.0f;
@@ -1065,7 +1077,7 @@ int main(int argc, char* argv[])
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
-        if(interactable_object != NULL && !is_inspecting){
+        if(interactable_object != NULL && !is_inspecting && !fst_anim && !collect_anim){
             TextRendering_Press_E_To_Inspect(window);
         }
 
@@ -1288,6 +1300,7 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage18"), 18);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage19"), 19);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage20"), 20);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage21"), 21);
     glUseProgram(0);
 }
 
@@ -1771,7 +1784,7 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         if(is_inspecting){
             g_AngleX += 0.002*dx;
             g_AngleY += 0.002*dy;
-        }else if(!fstAnim && !collect_anim){
+        }else if(!fst_anim && !collect_anim){
             // Atualizamos parâmetros da câmera com os deslocamentos
             g_CameraTheta -= 0.01f*dx;
             g_CameraPhi   += 0.01f*dy;
@@ -1885,7 +1898,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         fflush(stdout);
     }
 
-    if(key == GLFW_KEY_E && action == GLFW_PRESS && !fstAnim && !collect_anim){
+    if(key == GLFW_KEY_E && action == GLFW_PRESS && !fst_anim && !collect_anim){
         if(interactable_object != NULL && !is_inspecting){
             is_inspecting = true;
             g_AngleX = 0.0;
@@ -1935,22 +1948,22 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 
     if(!is_inspecting && action == GLFW_PRESS){
         if(key == GLFW_KEY_W ){
-            movingForward = true;
+            moving_forward = true;
         }
 
         /* S -> move para tras */
         if(key == GLFW_KEY_S){
-            movingBackward = true;
+            moving_backwards = true;
         }
 
         /* A -> move para esquerda */
         if(key == GLFW_KEY_A){
-            movingLeft = true;
+            moving_left = true;
         }
 
         /* D -> move para direita */
         if(key == GLFW_KEY_D ){
-            movingRight = true;
+            moving_right = true;
         }
 
         if(key == GLFW_KEY_LEFT_SHIFT){
@@ -1959,33 +1972,33 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 
         /* Space -> move para cima */
         if(key == GLFW_KEY_SPACE ){
-            movingUp = true;
+            moving_up = true;
         }
 
         /* ctrl -> move para baixo */
         if(key == GLFW_KEY_LEFT_CONTROL){
-            movingDown = true;
+            moving_down = true;
         }
     }
 
     if(action == GLFW_RELEASE){
         if(key == GLFW_KEY_W ){
-            movingForward = false;
+            moving_forward = false;
         }
 
         /* S -> move para tras */
         if(key == GLFW_KEY_S){
-            movingBackward = false;
+            moving_backwards = false;
         }
 
         /* A -> move para esquerda */
         if(key == GLFW_KEY_A){
-            movingLeft = false;
+            moving_left = false;
         }
 
         /* D -> move para direita */
         if(key == GLFW_KEY_D ){
-            movingRight = false;
+            moving_right = false;
         }
 
         if(key == GLFW_KEY_LEFT_SHIFT){
@@ -1994,12 +2007,12 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 
         /* Space -> move para cima */
         if(key == GLFW_KEY_SPACE ){
-            movingUp = false;
+            moving_up = false;
         }
 
         /* ctrl -> move para baixo */
         if(key == GLFW_KEY_LEFT_CONTROL){
-            movingDown = false;
+            moving_down = false;
         }
     }
 
@@ -2412,12 +2425,12 @@ void move_with_collision(SceneObject player,
     for(SceneObject *i : objects_group){
         SceneObject obj = *i;
 
-        if(obj.has_collision() && !fstAnim && !collect_anim){
+        if(obj.has_collision() && !fst_anim && !collect_anim){
             float nextX = cameraX;
             float nextZ = cameraZ;
             SceneObject nextObjX = player;
             SceneObject nextObjZ = player;
-            if (movingForward){
+            if (moving_forward){
                 movF = true;
                 nextX += -w.x * delta_t * speed;
                 nextZ += -w.z * delta_t * speed;
@@ -2430,7 +2443,7 @@ void move_with_collision(SceneObject player,
                     colFZ = true;
                 }
             }
-             if(movingBackward){
+             if(moving_backwards){
                 movB = true;
                 nextX += w.x * delta_t * speed;
                 nextZ += w.z * delta_t * speed;
@@ -2443,7 +2456,7 @@ void move_with_collision(SceneObject player,
                     colBZ = true;
                 }
             }
-            if(movingRight){
+            if(moving_right){
                 movR = true;
                 nextX += u.x * delta_t * speed;
                 nextZ += u.z * delta_t * speed;
@@ -2456,7 +2469,7 @@ void move_with_collision(SceneObject player,
                     colRZ = true;
                 }
             }
-            if(movingLeft){
+            if(moving_left){
                 movL = true;
                 nextX += -u.x * delta_t * speed;
                 nextZ += -u.z * delta_t * speed;
@@ -2499,10 +2512,10 @@ void move_with_collision(SceneObject player,
 
     /* Movimentacao no Y *Testes* */
 
-    if(movingUp){
+    if(moving_up){
         cameraY += (u.y + 1) * delta_t * speed;
     }
-    if(movingDown){
+    if(moving_down){
         cameraY += -(u.y + 1) * delta_t * speed;
     }
 

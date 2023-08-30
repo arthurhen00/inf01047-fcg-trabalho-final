@@ -39,6 +39,7 @@ uniform mat4 projection;
 #define BED         16
 #define BOOK_SHELF  17
 #define BOOKS       18
+#define ROOM_CEILING 19
 
 uniform int object_id;
 
@@ -68,6 +69,7 @@ uniform sampler2D TextureImage17;
 uniform sampler2D TextureImage18;
 uniform sampler2D TextureImage19;
 uniform sampler2D TextureImage20;
+uniform sampler2D TextureImage21;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -289,6 +291,14 @@ void main()
         Kd = texture(TextureImage20, vec2(U,V)).rgb;
         Ks = vec3(0.0f,0.0f,0.0f);
         Ka = Kd/2;
+        q = 1.0f;
+    }else if(object_id == ROOM_CEILING){
+        U = texcoords.x;
+        V = texcoords.y;
+
+        Kd = texture(TextureImage21, vec2(U,V)).rgb;
+        Ks = vec3(0.0f,0.0f,0.0f);
+        Ka = Kd;
         q = 1.0f;
     } else {
         Kd = vec3(0.0,0.0,0.0);
