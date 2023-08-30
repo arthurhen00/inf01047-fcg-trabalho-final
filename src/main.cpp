@@ -927,7 +927,7 @@ int main(int argc, char* argv[])
                 if(total_t >= 0.5f){
                     /* coloca a peca no tabuleiro */
                     glm::mat4 piece_model = pieces_initial_position.at(last_inspected_obj->get_name());
-                    last_inspected_obj->set_position(piece_model[3].x, piece_model[3].y, piece_model[3].z);
+                    last_inspected_obj->set_model(model);
                 }
                 if(total_t >= 1.5f){
                     /* Sai da animação*/
@@ -1108,6 +1108,9 @@ int main(int argc, char* argv[])
             glUniform1i(g_object_id_uniform, interactable_object->get_index());
             DrawVirtualObject(interactable_object->get_model_name().c_str());
 
+
+
+
             if(interactable_object->get_name() == "bowl"){
 
                 model = Matrix_Translate(interactable_object->get_position().x,
@@ -1120,6 +1123,7 @@ int main(int argc, char* argv[])
                                          -interactable_object->get_position().y,
                                          -interactable_object->get_position().z)
                       * white_king.get_model();
+
                 glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
                 glUniform1i(g_object_id_uniform, white_king.get_index());
                 DrawVirtualObject(white_king.get_model_name().c_str());
@@ -1886,20 +1890,19 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             old_camera_y = cameraY;
             old_camera_z = cameraZ;
 
-            glm::mat4 model = interactable_object->get_model()
-                  * Matrix_Rotate_Z(g_AngleZ)
-                  * Matrix_Rotate_Y(g_AngleY)
-                  * Matrix_Rotate_X(g_AngleX);
 
             glm::vec4 bowl_up = glm::vec4(0,1,0,0);
-            glm::vec4 visible_v = (bowl_up * model);
-
+            glm::vec4 visible_v = ( Matrix_Rotate_Z(g_AngleZ)
+                                   * Matrix_Rotate_Y(g_AngleY)
+                                   * Matrix_Rotate_X(g_AngleX)
+                                   * bowl_up
+                                   );
             visible_v.w = 0.0f;
-            std::cout << dotproduct(visible_v, camera_view_vector) << std::endl;
-            if(dotproduct(visible_v, camera_view_vector) > cos(PI) ){
+
+            float inner_prod = dot(visible_v, -camera_view_vector);
+            if(inner_prod > 1.6 ){
                 std::cout << "olhando" << std::endl;
             }
-
 
         }
 

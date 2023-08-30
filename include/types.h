@@ -135,8 +135,14 @@ struct SceneObject
         return model_name;
     }
 
+
+
     glm::mat4 get_model(){
         return model;
+    }
+
+    void set_model(glm::mat4 new_model){
+        model = new_model;
     }
 
     bool has_collision(){
