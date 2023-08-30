@@ -67,6 +67,27 @@ glm::mat4 Matrix_Translate(float tx, float ty, float tz)
         0.0f , 0.0f , 1.0f , tz ,
         0.0f , 0.0f , 0.0f , 1.0f
     );
+
+}
+
+glm::mat4 Matrix_Translate(glm::vec4 vec)
+{
+    return Matrix(
+        1.0f , 0.0f , 0.0f , vec.x ,
+        0.0f , 1.0f , 0.0f , vec.y ,
+        0.0f , 0.0f , 1.0f , vec.z ,
+        0.0f , 0.0f , 0.0f , 1.0f
+    );
+}
+
+glm::mat4 Matrix_Translate(glm::vec3 vec)
+{
+    return Matrix(
+        1.0f , 0.0f , 0.0f , vec.x ,
+        0.0f , 1.0f , 0.0f , vec.y ,
+        0.0f , 0.0f , 1.0f , vec.z ,
+        0.0f , 0.0f , 0.0f , 1.0f
+    );
 }
 
 // Matriz S de "escalamento de um ponto" em relação à origem do sistema de

@@ -95,7 +95,8 @@ void TextRendering_PrintMatrixVectorProductDivW(GLFWwindow* window, glm::mat4 M,
 // Funções abaixo renderizam como texto na janela OpenGL algumas matrizes e
 // outras informações do programa. Definidas após main().
 void TextRendering_ShowModelViewProjection(GLFWwindow* window, glm::mat4 projection, glm::mat4 view, glm::mat4 model, glm::vec4 p_model);
-void TextRendering_ShowEulerAngles(GLFWwindow* window);
+void TextRendering_Press_E_To_Inspect(GLFWwindow* window);
+void TextRendering_Press_F_To_Collect(GLFWwindow* window);
 void TextRendering_ShowProjection(GLFWwindow* window);
 void TextRendering_ShowFramesPerSecond(GLFWwindow* window);
 
@@ -109,6 +110,8 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
 void LoadTextureImage(const char* filename);
+void load_models();
+void draw_objects();
 
 // Abaixo definimos variáveis globais utilizadas em várias funções do código.
 
@@ -118,6 +121,7 @@ void LoadTextureImage(const char* filename);
 // estes são acessados.
 std::map<std::string, SceneObject> g_VirtualScene;
 std::map<std::string, glm::mat4> pieces_initial_position;
+std::vector<SceneObject*> objects_to_draw;
 
 // Pilha que guardará as matrizes de modelagem.
 std::stack<glm::mat4>  g_MatrixStack;
@@ -173,7 +177,7 @@ GLint g_bbox_max_uniform;
 
 
 SceneObject *interactable_object;
-SceneObject *last_inspected_obj;
+SceneObject *piece_to_reposition;
 bool is_inspecting = false;
 // Variaveis da free cam
 float cameraX = 7.5f;
@@ -226,7 +230,7 @@ int main(int argc, char* argv[])
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
-    window = glfwCreateWindow(800, 600, "INF01047 - 00332968 - Arthur Hendges da Silva", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "INF01047 - 00332968 - Arthur e Gabriel", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -295,89 +299,7 @@ int main(int argc, char* argv[])
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
 
-    ObjModel plane_model("../../data/plane.obj");
-    ComputeNormals(&plane_model);
-    BuildTrianglesAndAddToVirtualScene(&plane_model);
-
-    ObjModel sphere_model("../../data/sphere.obj");
-    ComputeNormals(&sphere_model);
-    BuildTrianglesAndAddToVirtualScene(&sphere_model);
-
-    ObjModel bunny_model("../../data/bunny.obj");
-    ComputeNormals(&bunny_model);
-    BuildTrianglesAndAddToVirtualScene(&bunny_model);
-
-    ObjModel boxmodel("../../data/box/box.obj");
-    ComputeNormals(&boxmodel);
-    BuildTrianglesAndAddToVirtualScene(&boxmodel);
-
-    ObjModel skyboxmodel("../../data/skybox.obj");
-    ComputeNormals(&skyboxmodel);
-    BuildTrianglesAndAddToVirtualScene(&skyboxmodel);
-
-    ObjModel table_model("../../data/table/table.obj");
-    ComputeNormals(&table_model);
-    BuildTrianglesAndAddToVirtualScene(&table_model);
-
-    ObjModel chess_model("../../data/chess/ChessBoard.obj");
-    ComputeNormals(&chess_model);
-    BuildTrianglesAndAddToVirtualScene(&chess_model);
-
-    ObjModel rook_model("../../data/chess/rook.obj");
-    ComputeNormals(&rook_model);
-    BuildTrianglesAndAddToVirtualScene(&rook_model);
-
-    ObjModel knight_model("../../data/chess/knight.obj");
-    ComputeNormals(&knight_model);
-    BuildTrianglesAndAddToVirtualScene(&knight_model);
-
-    ObjModel bishop_model("../../data/chess/bishop.obj");
-    ComputeNormals(&bishop_model);
-    BuildTrianglesAndAddToVirtualScene(&bishop_model);
-
-    ObjModel queen_model("../../data/chess/queen.obj");
-    ComputeNormals(&queen_model);
-    BuildTrianglesAndAddToVirtualScene(&queen_model);
-
-    ObjModel king_model("../../data/chess/king.obj");
-    ComputeNormals(&king_model);
-    BuildTrianglesAndAddToVirtualScene(&king_model);
-
-    ObjModel pawn_model("../../data/chess/pawn.obj");
-    ComputeNormals(&pawn_model);
-    BuildTrianglesAndAddToVirtualScene(&pawn_model);
-
-    ObjModel bowl_model("../../data/bowl/bowl.obj");
-    ComputeNormals(&bowl_model);
-    BuildTrianglesAndAddToVirtualScene(&bowl_model);
-
-    ObjModel console_table_model("../../data/console_table/console-table-004.obj");
-    ComputeNormals(&console_table_model);
-    BuildTrianglesAndAddToVirtualScene(&console_table_model);
-
-    ObjModel sofa_model("../../data/sofa/sofa.obj");
-    ComputeNormals(&sofa_model);
-    BuildTrianglesAndAddToVirtualScene(&sofa_model);
-
-    ObjModel tv_model("../../data/smarttv.obj");
-    ComputeNormals(&tv_model);
-    BuildTrianglesAndAddToVirtualScene(&tv_model);
-
-    ObjModel shelf_model("../../data/shelf/shelf-040.obj");
-    ComputeNormals(&shelf_model);
-    BuildTrianglesAndAddToVirtualScene(&shelf_model);
-
-    ObjModel chair_model("../../data/chair/chair.obj");
-    ComputeNormals(&chair_model);
-    BuildTrianglesAndAddToVirtualScene(&chair_model);
-
-    ObjModel bed_model("../../data/bed/Old_bed.obj");
-    ComputeNormals(&bed_model);
-    BuildTrianglesAndAddToVirtualScene(&bed_model);
-
-    ObjModel bookshelf_model("../../data/bookshelf/bookshelf-031.obj");
-    ComputeNormals(&bookshelf_model);
-    BuildTrianglesAndAddToVirtualScene(&bookshelf_model);
+    load_models();
 
     #define SPHERE      0
     #define BUNNY       1
@@ -399,7 +321,7 @@ int main(int argc, char* argv[])
     #define BOOK_SHELF  17
     #define BOOKS       18
 
-    std::vector<SceneObject*> objects_to_draw;
+
 
     /* Criacao de objetos */
     SceneObject player = g_VirtualScene.at("the_sphere");
@@ -899,7 +821,6 @@ int main(int argc, char* argv[])
             glm::vec4 vec = glm::normalize(glm::vec4(0.0f,0.0f,1.0f,0.0f)) * g_CameraDistance;
             camera_position_c  = bbox_center + vec;
             camera_view_vector = bbox_center - camera_position_c;
-            last_inspected_obj = interactable_object;
         } else if(collect_anim){
             /* Animação de coleta */
             glm::vec3 start_pos = glm::vec3(-3.8f,3.0f,-2.0f);
@@ -926,8 +847,8 @@ int main(int argc, char* argv[])
                 initial_t = t;
                 if(total_t >= 0.5f){
                     /* coloca a peca no tabuleiro */
-                    glm::mat4 piece_model = pieces_initial_position.at(last_inspected_obj->get_name());
-                    last_inspected_obj->set_model(model);
+                    glm::mat4 piece_model = pieces_initial_position.at(piece_to_reposition->get_name());
+                    piece_to_reposition->set_model(piece_model);
                 }
                 if(total_t >= 1.5f){
                     /* Sai da animação*/
@@ -1068,20 +989,14 @@ int main(int argc, char* argv[])
         if(!is_inspecting){
             // PLAYER
             player.set_position(cameraX, cameraY, cameraZ);
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(player.get_model()));
-            glUniform1i(g_object_id_uniform, SPHERE);
-            DrawVirtualObject("the_sphere");
 
             /* Desenha os objetos */
-            for(SceneObject *obj: objects_to_draw){
-                glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(obj->get_model()));
-                glUniform1i(g_object_id_uniform, obj->get_index());
-                DrawVirtualObject(const_cast<char*>(obj->get_model_name().c_str()));
-            }
+            draw_objects();
 
         }
 
         if(is_inspecting && interactable_object != NULL){
+            //---------------------------- SKYBOX ----------------------------
             model = Matrix_Translate(camera_position_c.x,camera_position_c.y,camera_position_c.z);
 
             glDisable(GL_DEPTH_TEST);
@@ -1094,39 +1009,52 @@ int main(int argc, char* argv[])
             glEnable(GL_CULL_FACE);
             glEnable(GL_DEPTH_TEST);
 
-            model = Matrix_Translate(interactable_object->get_position().x,
-                                         interactable_object->get_position().y,
-                                         interactable_object->get_position().z)
-                      * Matrix_Rotate_Z(g_AngleZ)
-                      * Matrix_Rotate_Y(g_AngleY)
-                      * Matrix_Rotate_X(g_AngleX)
-                      * Matrix_Translate(-interactable_object->get_position().x,
-                                         -interactable_object->get_position().y,
-                                         -interactable_object->get_position().z)
+            //---------------------------- OBJETO INTERAGIDO ----------------------------
+            glm::mat4 rotation_matrix = Matrix_Rotate_Z(g_AngleZ)
+                                          * Matrix_Rotate_Y(g_AngleY)
+                                          * Matrix_Rotate_X(g_AngleX);
+
+
+            model = Matrix_Translate(interactable_object->get_bbox_center())
+                      * rotation_matrix
+                      * Matrix_Translate(-interactable_object->get_bbox_center())
                       * interactable_object->get_model();
+
+
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, interactable_object->get_index());
             DrawVirtualObject(interactable_object->get_model_name().c_str());
 
 
 
-
+            //---------------------------- OBJETOS SECUNDARIOS ----------------------------
             if(interactable_object->get_name() == "bowl"){
 
-                model = Matrix_Translate(interactable_object->get_position().x,
-                                         interactable_object->get_position().y,
-                                         interactable_object->get_position().z)
-                      * Matrix_Rotate_Z(g_AngleZ)
-                      * Matrix_Rotate_Y(g_AngleY)
-                      * Matrix_Rotate_X(g_AngleX)
-                      * Matrix_Translate(-interactable_object->get_position().x,
-                                         -interactable_object->get_position().y,
-                                         -interactable_object->get_position().z)
+                model = Matrix_Translate(interactable_object->get_bbox_center())
+                      * rotation_matrix
+                      * Matrix_Translate(-interactable_object->get_bbox_center())
                       * white_king.get_model();
 
                 glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
                 glUniform1i(g_object_id_uniform, white_king.get_index());
                 DrawVirtualObject(white_king.get_model_name().c_str());
+
+
+                piece_to_reposition = &white_king;
+
+                glm::vec4 bowl_up = glm::vec4(0,1,0,0);
+                glm::vec4 visible_v = ( rotation_matrix * bowl_up );
+                visible_v.w = 0.0f;
+
+                float inner_prod = dot(visible_v, -camera_view_vector);
+                if(inner_prod > 1.6 ){
+                    TextRendering_Press_F_To_Collect(window);
+                }
+
+
+            }else if(interactable_object->get_index() == WHITE_PIECE || interactable_object->get_index() == BLACK_PIECE) {
+                TextRendering_Press_F_To_Collect(window);
+                piece_to_reposition = interactable_object;
             }
 
         }
@@ -1137,7 +1065,10 @@ int main(int argc, char* argv[])
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
-        TextRendering_ShowEulerAngles(window);
+        if(interactable_object != NULL && !is_inspecting){
+            TextRendering_Press_E_To_Inspect(window);
+        }
+
 
         // Imprimimos na informação sobre a matriz de projeção sendo utilizada.
         TextRendering_ShowProjection(window);
@@ -1168,7 +1099,101 @@ int main(int argc, char* argv[])
     return 0;
 }
 
+void draw_objects(){
+    for(SceneObject *obj: objects_to_draw){
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(obj->get_model()));
+        glUniform1i(g_object_id_uniform, obj->get_index());
+        DrawVirtualObject(const_cast<char*>(obj->get_model_name().c_str()));
+    }
+}
 
+
+
+void load_models(){
+    ObjModel plane_model("../../data/plane.obj");
+    ComputeNormals(&plane_model);
+    BuildTrianglesAndAddToVirtualScene(&plane_model);
+
+    ObjModel sphere_model("../../data/sphere.obj");
+    ComputeNormals(&sphere_model);
+    BuildTrianglesAndAddToVirtualScene(&sphere_model);
+
+    ObjModel bunny_model("../../data/bunny.obj");
+    ComputeNormals(&bunny_model);
+    BuildTrianglesAndAddToVirtualScene(&bunny_model);
+
+    ObjModel boxmodel("../../data/box/box.obj");
+    ComputeNormals(&boxmodel);
+    BuildTrianglesAndAddToVirtualScene(&boxmodel);
+
+    ObjModel skyboxmodel("../../data/skybox.obj");
+    ComputeNormals(&skyboxmodel);
+    BuildTrianglesAndAddToVirtualScene(&skyboxmodel);
+
+    ObjModel table_model("../../data/table/table.obj");
+    ComputeNormals(&table_model);
+    BuildTrianglesAndAddToVirtualScene(&table_model);
+
+    ObjModel chess_model("../../data/chess/ChessBoard.obj");
+    ComputeNormals(&chess_model);
+    BuildTrianglesAndAddToVirtualScene(&chess_model);
+
+    ObjModel rook_model("../../data/chess/rook.obj");
+    ComputeNormals(&rook_model);
+    BuildTrianglesAndAddToVirtualScene(&rook_model);
+
+    ObjModel knight_model("../../data/chess/knight.obj");
+    ComputeNormals(&knight_model);
+    BuildTrianglesAndAddToVirtualScene(&knight_model);
+
+    ObjModel bishop_model("../../data/chess/bishop.obj");
+    ComputeNormals(&bishop_model);
+    BuildTrianglesAndAddToVirtualScene(&bishop_model);
+
+    ObjModel queen_model("../../data/chess/queen.obj");
+    ComputeNormals(&queen_model);
+    BuildTrianglesAndAddToVirtualScene(&queen_model);
+
+    ObjModel king_model("../../data/chess/king.obj");
+    ComputeNormals(&king_model);
+    BuildTrianglesAndAddToVirtualScene(&king_model);
+
+    ObjModel pawn_model("../../data/chess/pawn.obj");
+    ComputeNormals(&pawn_model);
+    BuildTrianglesAndAddToVirtualScene(&pawn_model);
+
+    ObjModel bowl_model("../../data/bowl/bowl.obj");
+    ComputeNormals(&bowl_model);
+    BuildTrianglesAndAddToVirtualScene(&bowl_model);
+
+    ObjModel console_table_model("../../data/console_table/console-table-004.obj");
+    ComputeNormals(&console_table_model);
+    BuildTrianglesAndAddToVirtualScene(&console_table_model);
+
+    ObjModel sofa_model("../../data/sofa/sofa.obj");
+    ComputeNormals(&sofa_model);
+    BuildTrianglesAndAddToVirtualScene(&sofa_model);
+
+    ObjModel tv_model("../../data/smarttv.obj");
+    ComputeNormals(&tv_model);
+    BuildTrianglesAndAddToVirtualScene(&tv_model);
+
+    ObjModel shelf_model("../../data/shelf/shelf-040.obj");
+    ComputeNormals(&shelf_model);
+    BuildTrianglesAndAddToVirtualScene(&shelf_model);
+
+    ObjModel chair_model("../../data/chair/chair.obj");
+    ComputeNormals(&chair_model);
+    BuildTrianglesAndAddToVirtualScene(&chair_model);
+
+    ObjModel bed_model("../../data/bed/Old_bed.obj");
+    ComputeNormals(&bed_model);
+    BuildTrianglesAndAddToVirtualScene(&bed_model);
+
+    ObjModel bookshelf_model("../../data/bookshelf/bookshelf-031.obj");
+    ComputeNormals(&bookshelf_model);
+    BuildTrianglesAndAddToVirtualScene(&bookshelf_model);
+}
 
 
 // Função que desenha um objeto armazenado em g_VirtualScene. Veja definição
@@ -1775,16 +1800,9 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
     // Atualizamos a distância da câmera para a origem utilizando a
     // movimentação da "rodinha", simulando um ZOOM.
-    g_CameraDistance -= 0.1f*yoffset;
-
-    // Uma câmera look-at nunca pode estar exatamente "em cima" do ponto para
-    // onde ela está olhando, pois isto gera problemas de divisão por zero na
-    // definição do sistema de coordenadas da câmera. Isto é, a variável abaixo
-    // nunca pode ser zero. Versões anteriores deste código possuíam este bug,
-    // o qual foi detectado pelo aluno Vinicius Fraga (2017/2).
-    const float verysmallnumber = std::numeric_limits<float>::epsilon();
-    if (g_CameraDistance < verysmallnumber)
-        g_CameraDistance = verysmallnumber;
+    if(is_inspecting && (yoffset < 0 || g_CameraDistance > 0.5 )){
+        g_CameraDistance -= 0.1f*yoffset;
+    }
 }
 
 // Definição da função que será chamada sempre que o usuário pressionar alguma
@@ -1799,8 +1817,11 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             std::exit(100 + i);
     // ==================
 
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
         is_inspecting = false;
+        g_CameraDistance = 3.5;
+    }
+
 
     // O código abaixo implementa a seguinte lógica:
     //   Se apertar tecla X       então g_AngleX += delta;
@@ -1875,16 +1896,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 
     /*Coleta*/
     if(key == GLFW_KEY_F && GLFW_PRESS & is_inspecting){
-        if(interactable_object->get_index() == WHITE_PIECE || interactable_object->get_index() == BLACK_PIECE){
-
-            old_camera_x = cameraX;
-            old_camera_y = cameraY;
-            old_camera_z = cameraZ;
-
-
-            is_inspecting = false;
-            collect_anim = true;
-        } else if(interactable_object->get_name() == "bowl"){
+        if(interactable_object->get_name() == "bowl"){
 
             old_camera_x = cameraX;
             old_camera_y = cameraY;
@@ -1901,9 +1913,19 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 
             float inner_prod = dot(visible_v, -camera_view_vector);
             if(inner_prod > 1.6 ){
-                std::cout << "olhando" << std::endl;
+                is_inspecting = false;
+                collect_anim = true;
             }
 
+        }else if(interactable_object->get_index() == WHITE_PIECE || interactable_object->get_index() == BLACK_PIECE){
+
+            old_camera_x = cameraX;
+            old_camera_y = cameraY;
+            old_camera_z = cameraZ;
+
+
+            is_inspecting = false;
+            collect_anim = true;
         }
 
     }
@@ -2054,17 +2076,30 @@ void TextRendering_ShowModelViewProjection(
 
 // Escrevemos na tela os ângulos de Euler definidos nas variáveis globais
 // g_AngleX, g_AngleY, e g_AngleZ.
-void TextRendering_ShowEulerAngles(GLFWwindow* window)
+void TextRendering_Press_E_To_Inspect(GLFWwindow* window)
 {
     if ( !g_ShowInfoText )
         return;
 
     float pad = TextRendering_LineHeight(window);
 
-    char buffer[80];
-    snprintf(buffer, 80, "Euler Angles rotation matrix = Z(%.2f)*Y(%.2f)*X(%.2f)\n", g_AngleZ, g_AngleY, g_AngleX);
+    char buffer[20];
+    snprintf(buffer, 20, "Press E to inspect\n");
 
-    TextRendering_PrintString(window, buffer, -1.0f+pad/10, -1.0f+2*pad/10, 1.0f);
+    TextRendering_PrintString(window, buffer, -0.13, -0.5f, 2.0f);
+}
+
+void TextRendering_Press_F_To_Collect(GLFWwindow* window)
+{
+    if ( !g_ShowInfoText )
+        return;
+
+    float pad = TextRendering_LineHeight(window);
+
+    char buffer[20];
+    snprintf(buffer, 20, "Press F to collect\n");
+
+    TextRendering_PrintString(window, buffer, -0.13, -0.5f, 2.0f);
 }
 
 // Escrevemos na tela qual matriz de projeção está sendo utilizada.

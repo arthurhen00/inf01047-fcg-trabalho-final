@@ -225,13 +225,7 @@ void main()
         Ka = Kd/2;
         q = 1.0;
 
-    }else if (object_id == SKYBOX){
-        Kd = vec3(0.0,0.0,0.0);
-        Ks = vec3(0.0,0.0,0.0);
-        Ka = vec3(0.0,0.0,0.0);
-        q = 32.0;
-
-    } else if(object_id == CONSOLE_TABLE){
+    }else if(object_id == CONSOLE_TABLE){
 
         U = texcoords.x;
         V = texcoords.y;
@@ -340,14 +334,19 @@ void main()
 
     color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
 
+    if(object_id == SKYBOX){
+        color.rgb = vec3(1.0,1.0,1.0);
+    }
+    if(object_id == BOWL){
+        color = color_v;
+    }
+
 
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
     color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
 
 
-    if(object_id == BOWL){
-        color = color_v;
-    }
+
 }
 
