@@ -40,6 +40,7 @@ uniform mat4 projection;
 #define BOOK_SHELF  17
 #define BOOKS       18
 #define ROOM_CEILING 19
+#define DRAWER      20
 
 uniform int object_id;
 
@@ -152,7 +153,7 @@ void main()
         q = 32.0;
     } else if ( object_id == ROOM_FLOOR ){
         float uR = 2;
-        float vR = 1.5;
+        float vR = 1;
 
         U = position_model.x * uR - floor(position_model.x * uR);
         V = position_model.z * vR - floor(position_model.z * vR);
@@ -227,14 +228,14 @@ void main()
         Ka = Kd/2;
         q = 1.0;
 
-    }else if(object_id == CONSOLE_TABLE){
+    }else if(object_id == CONSOLE_TABLE || object_id == DRAWER){
 
         U = texcoords.x;
         V = texcoords.y;
 
         Kd = texture(TextureImage12, vec2(U,V)).rgb;
         Ks = vec3(0.01,0.01,0.01);
-        Ka = Kd;
+        Ka = Kd*2;
         q = 1.0;
     } else if(object_id == SOFA){
         U = texcoords.x;
@@ -293,12 +294,15 @@ void main()
         Ka = Kd/2;
         q = 1.0f;
     }else if(object_id == ROOM_CEILING){
-        U = texcoords.x;
-        V = texcoords.y;
+        float uR = 2;
+        float vR = 1.5;
+
+        U = position_model.x * uR - floor(position_model.x * uR);
+        V = position_model.z * vR - floor(position_model.z * vR);
 
         Kd = texture(TextureImage21, vec2(U,V)).rgb;
         Ks = vec3(0.0f,0.0f,0.0f);
-        Ka = Kd;
+        Ka = Kd/2;
         q = 1.0f;
     } else {
         Kd = vec3(0.0,0.0,0.0);
@@ -345,7 +349,7 @@ void main()
     color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
 
     if(object_id == SKYBOX){
-        color.rgb = vec3(1.0,1.0,1.0);
+        color.rgb = vec3(0.1,0.1,0.1);
     }
     if(object_id == BOWL){
         color = color_v;

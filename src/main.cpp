@@ -97,6 +97,7 @@ void TextRendering_PrintMatrixVectorProductDivW(GLFWwindow* window, glm::mat4 M,
 void TextRendering_ShowModelViewProjection(GLFWwindow* window, glm::mat4 projection, glm::mat4 view, glm::mat4 model, glm::vec4 p_model);
 void TextRendering_Press_E_To_Inspect(GLFWwindow* window);
 void TextRendering_Press_F_To_Collect(GLFWwindow* window);
+void TextRendering_Press_F_To_Open(GLFWwindow* window);
 void TextRendering_ShowProjection(GLFWwindow* window);
 void TextRendering_ShowFramesPerSecond(GLFWwindow* window);
 
@@ -184,20 +185,24 @@ float cameraX = 7.5f;
 float cameraY = 1.0f;
 float cameraZ = -1.0f;
 float old_camera_x, old_camera_y, old_camera_z;
-bool moving_forward  = false;
+bool moving_forward   = false;
 bool moving_backwards = false;
-bool moving_left     = false;
-bool moving_right    = false;
-bool moving_up       = false;
-bool moving_down     = false;
+bool moving_left      = false;
+bool moving_right     = false;
+bool moving_up        = false;
+bool moving_down      = false;
 bool running        = false;
-bool fst_anim        = false;
+bool fst_anim       = false;
 bool collect_anim   = false;
+bool open_left_drawer  = false;
+bool open_right_drawer = false;
+bool hide[6] = {true, true, true, true, true, true};
 
 glm::vec4 camera_view_vector;
 
 glm::vec3 calculateBezierPoint(const std::vector<glm::vec3>& controlPoints, float t);
 void move_with_collision(SceneObject player, std::vector<SceneObject*> objects_group, float delta_t, float speed, glm::vec4 w, glm::vec4 u);
+void drawer(float delta_t, SceneObject player, SceneObject& drawer_left, SceneObject& drawer_right, SceneObject& collectable1);
 
 int obj_index = 0;
 
@@ -322,6 +327,7 @@ int main(int argc, char* argv[])
     #define BOOK_SHELF  17
     #define BOOKS       18
     #define ROOM_CEILING 19
+    #define DRAWER      20
 
 
     /* Criacao de objetos */
@@ -741,13 +747,29 @@ int main(int argc, char* argv[])
     pack_book2.set_index(BOOKS);
     objects_to_draw.push_back(&pack_book2);
 
+    SceneObject drawer_left = g_VirtualScene.at("drawer-left");
+    drawer_left.set_name("drawer_left");
+    drawer_left.scale(3.0f, 2.5f, 2.5f);
+    drawer_left.set_position(5.0f,-1.0f,-6.0f);
+    drawer_left.set_index(DRAWER);
+    drawer_left.set_inspectable(true);
+    objects_to_draw.push_back(&drawer_left);
+
+    SceneObject drawer_right = g_VirtualScene.at("drawer-right");
+    drawer_right.set_name("drawer_right");
+    drawer_right.scale(3.0f, 2.5f, 2.5f);
+    drawer_right.set_position(5.0f,-1.0f,-6.0f);
+    drawer_right.set_index(DRAWER);
+    drawer_right.set_inspectable(true);
+    objects_to_draw.push_back(&drawer_right);
+
     for(SceneObject* obj : objects_to_draw){
         if(obj->get_index() == WHITE_PIECE || obj->get_index() == BLACK_PIECE){
             pieces_initial_position.insert(std::make_pair(obj->get_name(),obj->get_model()));
         }
     }
 
-    black_king.set_position(-5.0f,piece_height,-3.3f);
+    black_king.set_position(4.5f,piece_height+0.4,-6.0f);
     black_queen.set_position(-5.5f,piece_height,-3.3f);
     white_king.set_position(-6.0f,piece_height+0.1,-3.90f);
     white_king.mRotate(-PI2,0.0f,0.0f);
@@ -944,6 +966,8 @@ int main(int argc, char* argv[])
             speed = 5.0f;
         }
 
+        drawer(delta_t, player, drawer_left, drawer_right, black_king);
+
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
         glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
@@ -965,7 +989,7 @@ int main(int argc, char* argv[])
                                                 &table2, &white_king, &white_queen, &sofa,
                                                 &shelf, &tv, &chair1, &coelho1, &esfera1,
                                                 &esfera2, &bed, &book_shelf, &pack_book1,
-                                                &pack_book2 };
+                                                &pack_book2, &drawer_left, &drawer_right};
 
         move_with_collision(player, objects_group, delta_t, speed, w, u);
 
@@ -1007,6 +1031,8 @@ int main(int argc, char* argv[])
 
         }
 
+
+
         if(is_inspecting && interactable_object != NULL){
             //---------------------------- SKYBOX ----------------------------
             model = Matrix_Translate(camera_position_c.x,camera_position_c.y,camera_position_c.z);
@@ -1037,10 +1063,8 @@ int main(int argc, char* argv[])
             glUniform1i(g_object_id_uniform, interactable_object->get_index());
             DrawVirtualObject(interactable_object->get_model_name().c_str());
 
-
-
             //---------------------------- OBJETOS SECUNDARIOS ----------------------------
-            if(interactable_object->get_name() == "bowl"){
+            if(interactable_object->get_name() == "bowl" && hide[0]){
 
                 model = Matrix_Translate(interactable_object->get_bbox_center())
                       * rotation_matrix
@@ -1064,11 +1088,33 @@ int main(int argc, char* argv[])
                 }
 
 
-            }else if(interactable_object->get_index() == WHITE_PIECE || interactable_object->get_index() == BLACK_PIECE) {
+            } else if(interactable_object->get_index() == WHITE_PIECE || interactable_object->get_index() == BLACK_PIECE) {
                 TextRendering_Press_F_To_Collect(window);
                 piece_to_reposition = interactable_object;
-            }
+            } else if(interactable_object->get_name() == "drawer_left" && hide[1]){
 
+                model = Matrix_Translate(interactable_object->get_bbox_center())
+                      * rotation_matrix
+                      * Matrix_Translate(-interactable_object->get_bbox_center())
+                      * black_king.get_model();
+
+                glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                glUniform1i(g_object_id_uniform, black_king.get_index());
+                DrawVirtualObject(black_king.get_model_name().c_str());
+
+
+                piece_to_reposition = &black_king;
+
+                glm::vec4 bowl_up = glm::vec4(0,1,0,0);
+                glm::vec4 visible_v = ( rotation_matrix * bowl_up );
+                visible_v.w = 0.0f;
+
+                float inner_prod = dot(visible_v, -camera_view_vector);
+                if(inner_prod > 1.6 ){
+                    TextRendering_Press_F_To_Collect(window);
+                }
+
+            }
         }
 
         if(!is_inspecting){
@@ -1077,10 +1123,22 @@ int main(int argc, char* argv[])
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
-        if(interactable_object != NULL && !is_inspecting && !fst_anim && !collect_anim){
-            TextRendering_Press_E_To_Inspect(window);
-        }
 
+        if(interactable_object != NULL && !is_inspecting && !fst_anim && !collect_anim){
+            if(interactable_object->get_name() == "drawer_left"){
+                TextRendering_Press_F_To_Open(window);
+                if(open_left_drawer){
+                    TextRendering_Press_E_To_Inspect(window);
+                }
+            } else if(interactable_object->get_name() == "drawer_right"){
+                TextRendering_Press_F_To_Open(window);
+                if(open_right_drawer){
+                    TextRendering_Press_E_To_Inspect(window);
+                }
+            } else {
+                TextRendering_Press_E_To_Inspect(window);
+            }
+        }
 
         // Imprimimos na informação sobre a matriz de projeção sendo utilizada.
         TextRendering_ShowProjection(window);
@@ -1900,22 +1958,35 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 
     if(key == GLFW_KEY_E && action == GLFW_PRESS && !fst_anim && !collect_anim){
         if(interactable_object != NULL && !is_inspecting){
-            is_inspecting = true;
-            g_AngleX = 0.0;
-            g_AngleY = 0.0;
-            g_AngleZ = 0.0;
+            if((interactable_object->get_name() == "drawer_left" && !open_left_drawer) ||
+                (interactable_object->get_name() == "drawer_right" && !open_right_drawer)){
+                // gaveta fechada
+            } else {
+                is_inspecting = true;
+                g_AngleX = 0.0;
+                g_AngleY = 0.0;
+                g_AngleZ = 0.0;
+            }
+        }
+    }
+
+    /* Abrir gaveta */
+    if(key == GLFW_KEY_F && interactable_object && action == GLFW_PRESS && !is_inspecting){
+        if(interactable_object->get_name() == "drawer_left"){
+            open_left_drawer = !open_left_drawer;
+        }
+        if(interactable_object->get_name() == "drawer_right"){
+            open_right_drawer = !open_right_drawer;
         }
     }
 
     /*Coleta*/
     if(key == GLFW_KEY_F && GLFW_PRESS & is_inspecting){
-        if(interactable_object->get_name() == "bowl"){
-
-            old_camera_x = cameraX;
-            old_camera_y = cameraY;
-            old_camera_z = cameraZ;
-
-
+        old_camera_x = cameraX;
+        old_camera_y = cameraY;
+        old_camera_z = cameraZ;
+        if(interactable_object->get_name() == "bowl" && hide[0]){
+            //white king
             glm::vec4 bowl_up = glm::vec4(0,1,0,0);
             glm::vec4 visible_v = ( Matrix_Rotate_Z(g_AngleZ)
                                    * Matrix_Rotate_Y(g_AngleY)
@@ -1928,17 +1999,28 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             if(inner_prod > 1.6 ){
                 is_inspecting = false;
                 collect_anim = true;
+                hide[0] = false;
             }
 
-        }else if(interactable_object->get_index() == WHITE_PIECE || interactable_object->get_index() == BLACK_PIECE){
-
-            old_camera_x = cameraX;
-            old_camera_y = cameraY;
-            old_camera_z = cameraZ;
-
-
+        } else if(interactable_object->get_index() == WHITE_PIECE || interactable_object->get_index() == BLACK_PIECE){
             is_inspecting = false;
             collect_anim = true;
+        } else if(interactable_object->get_name() == "drawer_left" && hide[1]){
+            //black king
+            glm::vec4 bowl_up = glm::vec4(0,1,0,0);
+            glm::vec4 visible_v = ( Matrix_Rotate_Z(g_AngleZ)
+                                   * Matrix_Rotate_Y(g_AngleY)
+                                   * Matrix_Rotate_X(g_AngleX)
+                                   * bowl_up
+                                   );
+            visible_v.w = 0.0f;
+
+            float inner_prod = dot(visible_v, -camera_view_vector);
+            if(inner_prod > 1.6 ){
+                is_inspecting = false;
+                collect_anim = true;
+                hide[1] = false;
+            }
         }
 
     }
@@ -2113,6 +2195,19 @@ void TextRendering_Press_F_To_Collect(GLFWwindow* window)
     snprintf(buffer, 20, "Press F to collect\n");
 
     TextRendering_PrintString(window, buffer, -0.13, -0.5f, 2.0f);
+}
+
+void TextRendering_Press_F_To_Open(GLFWwindow* window)
+{
+    if ( !g_ShowInfoText )
+        return;
+
+    float pad = TextRendering_LineHeight(window);
+
+    char buffer[22];
+    snprintf(buffer, 22, "Press F to open/close\n");
+
+    TextRendering_PrintString(window, buffer, -0.13, -0.6f, 2.0f);
 }
 
 // Escrevemos na tela qual matriz de projeção está sendo utilizada.
@@ -2521,22 +2616,47 @@ void move_with_collision(SceneObject player,
 
 }
 
-void collect_piece_anim(float t_bezier3){
+void drawer(float delta_t, SceneObject player, SceneObject& drawer_left, SceneObject& drawer_right,
+            SceneObject& collectable1){
+    if(open_left_drawer){
+        // abertura
+        float new_z = delta_t * 4;
+        SceneObject new_pos = drawer_left;
+        new_pos.translate(0,0,new_z);
+        if(drawer_left.get_position().z <= -5.6f &&
+           !isBoundingBoxIntersection(player, new_pos) ){
+            drawer_left.translate(0,0,new_z);
+            collectable1.translate(0,0,new_z + 3);
+        }
+    } else {
+        float new_z = delta_t * 4;
+        SceneObject new_pos = drawer_left;
+        new_pos.translate(0,0,new_z);
+        if(drawer_left.get_position().z >= -6.0f &&
+           !isBoundingBoxIntersection(player, new_pos) ){
+            drawer_left.translate(0,0,-new_z);
+            collectable1.translate(0,0,-(new_z + 3));
+        }
+    }
 
-    /* Funcao para animação de coleta */
-
-    glm::vec3 start_pos = glm::vec3(-3.8f,4,-4.5f);
-    glm::vec3 final_pos = glm::vec3(-3.8f,2,-4.0f);
-
-    glm::vec3 look_at = glm::vec3(-3.8f, 1, 4.0f);
-
-    glm::vec3 med_pos = calculateBezierPoint({start_pos, final_pos}, t_bezier3);
-
-    cameraX = med_pos.x;
-    cameraY = med_pos.y;
-    cameraZ = med_pos.z;
-
-
+    if(open_right_drawer){
+        // abertura
+        float new_z = delta_t * 4;
+        SceneObject new_pos = drawer_right;
+        new_pos.translate(0,0,new_z);
+        if(drawer_right.get_position().z <= -5.6f &&
+           !isBoundingBoxIntersection(player, new_pos) ){
+            drawer_right.translate(0,0,new_z);
+        }
+    } else {
+        float new_z = delta_t * 4;
+        SceneObject new_pos = drawer_right;
+        new_pos.translate(0,0,new_z);
+        if(drawer_right.get_position().z >= -6.0f &&
+           !isBoundingBoxIntersection(player, new_pos) ){
+            drawer_right.translate(0,0,-new_z);
+        }
+    }
 
 }
 
