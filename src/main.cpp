@@ -205,7 +205,13 @@ void move_with_collision(SceneObject player, std::vector<SceneObject*> objects_g
 void drawer(float delta_t, SceneObject player, SceneObject& drawer_left, SceneObject& drawer_right, SceneObject& collectable1);
 
 int obj_index = 0;
-
+/*
+white_king -> bowl
+black_king -> drawer_left
+white_queen -> drawer
+black_queen -> table
+g_black_pawn -> sofa
+*/
 int main(int argc, char* argv[])
 {
     // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
@@ -282,8 +288,8 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");      // TextureImage0
     LoadTextureImage("../../data/tc-earth_nightmap_citylights.gif"); // TextureImage1
     LoadTextureImage("../../data/box/texture.jpg");                  // TextureImage2
-    LoadTextureImage("../../data/texture/floor/plywood.jpg"); // TextureImage3
-    LoadTextureImage("../../data/texture/floor/plywood rough.jpg"); // TextureImage4
+    LoadTextureImage("../../data/texture/floor/herringbone.jpg"); // TextureImage3
+    LoadTextureImage("../../data/texture/floor/herringbone_r.png"); // TextureImage4
     LoadTextureImage("../../data/texture/wall_1/wood_trunk_wall_diff_1k.jpg");   // TextureImage5
     LoadTextureImage("../../data/texture/wall_1/wood_trunk_wall_disp_1k.png");   // TextureImage6
     LoadTextureImage("../../data/table/texture.jpg");                            // TextureImage7
@@ -698,21 +704,21 @@ int main(int argc, char* argv[])
     coelho1.set_name("coelho1");
     coelho1.scale(0.5f,0.5f,0.5f);
     coelho1.mRotate(0,PI2,0);
-    coelho1.set_position(-9.0f, -0.3f, 1.2f);
+    coelho1.set_position(-9.0f, -0.5f, 1.2f);
     coelho1.set_index(BUNNY);
     objects_to_draw.push_back(&coelho1);
 
     SceneObject esfera1 = g_VirtualScene.at("the_sphere");
     esfera1.scale(0.5f, 0.5f, 0.5f);
     esfera1.set_name("esfera1");
-    esfera1.set_position(-9.0f, -0.3f, 2.6f);
+    esfera1.set_position(-9.0f, -0.5f, 2.6f);
     esfera1.set_index(SPHERE);
     objects_to_draw.push_back(&esfera1);
 
     SceneObject esfera2 = g_VirtualScene.at("the_sphere");
     esfera2.scale(0.5f, 0.5f, 0.5f);
     esfera2.set_name("esfera2");
-    esfera2.set_position(-9.0f, -0.3f, -0.2f);
+    esfera2.set_position(-9.0f, -0.5f, -0.2f);
     esfera2.set_index(SPHERE);
     objects_to_draw.push_back(&esfera2);
 
@@ -743,16 +749,22 @@ int main(int argc, char* argv[])
     SceneObject pack_book2 = g_VirtualScene.at("box.jpg");
     pack_book2.set_name("books");
     pack_book2.scale(0.6f, 0.35f, 0.4f);
-    pack_book2.set_position(-7.0f, 1.38f, 7.0f);
+    pack_book2.set_position(-7.0f, 1.32f, 7.0f);
     pack_book2.set_index(BOOKS);
     objects_to_draw.push_back(&pack_book2);
+
+    SceneObject pack_book3 = g_VirtualScene.at("box.jpg");
+    pack_book3.set_name("books");
+    pack_book3.scale(0.6f, 0.35f, 0.4f);
+    pack_book3.set_position(-7.2f, 2.22f, 7.0f);
+    pack_book3.set_index(BOOKS);
+    objects_to_draw.push_back(&pack_book3);
 
     SceneObject drawer_left = g_VirtualScene.at("drawer-left");
     drawer_left.set_name("drawer_left");
     drawer_left.scale(3.0f, 2.5f, 2.5f);
     drawer_left.set_position(5.0f,-1.0f,-6.0f);
     drawer_left.set_index(DRAWER);
-    drawer_left.set_inspectable(true);
     objects_to_draw.push_back(&drawer_left);
 
     SceneObject drawer_right = g_VirtualScene.at("drawer-right");
@@ -760,7 +772,6 @@ int main(int argc, char* argv[])
     drawer_right.scale(3.0f, 2.5f, 2.5f);
     drawer_right.set_position(5.0f,-1.0f,-6.0f);
     drawer_right.set_index(DRAWER);
-    drawer_right.set_inspectable(true);
     objects_to_draw.push_back(&drawer_right);
 
     for(SceneObject* obj : objects_to_draw){
@@ -771,9 +782,17 @@ int main(int argc, char* argv[])
 
     black_king.set_position(4.5f,piece_height+0.4,-6.0f);
     black_queen.set_position(-5.5f,piece_height,-3.3f);
+    g_black_pawn.set_position(-0.8f, piece_height-0.3, 4.6f);
+    g_black_pawn.mRotate(PI2,0,PI2);
+
     white_king.set_position(-6.0f,piece_height+0.1,-3.90f);
     white_king.mRotate(-PI2,0.0f,0.0f);
     white_queen.set_position(5.0f,piece_height-0.3f,-5.8f);
+    left_white_rook.set_position(-6.2f, piece_height-0.1, 6.8f);
+    right_black_rook.set_position(-6.0f, piece_height-0.1, 6.8f);
+    left_white_bishop.set_position(-3.8f,-0.12f,-6.0f);
+    left_white_bishop.mRotate(PI2, PI2, 0);
+
 
     if ( argc > 1 )
     {
@@ -870,7 +889,7 @@ int main(int argc, char* argv[])
                                     glm::vec4(med_pos.x, med_pos.y, med_pos.z, 0);
 
             if(t_bezier3 <= 1.0f){
-                t_bezier3 += 1.0f * delta_t;
+                t_bezier3 += 1.0f * delta_t * 2;
             } else {
                 if(total_t == 0){
                     initial_t = (float)glfwGetTime();
@@ -883,6 +902,7 @@ int main(int argc, char* argv[])
                     /* coloca a peca no tabuleiro */
                     glm::mat4 piece_model = pieces_initial_position.at(piece_to_reposition->get_name());
                     piece_to_reposition->set_model(piece_model);
+                    piece_to_reposition->set_inspectable(false);
                 }
                 if(total_t >= 1.5f){
                     /* Sai da animação*/
@@ -986,7 +1006,8 @@ int main(int argc, char* argv[])
         std::vector<SceneObject*> objects_group = {&room_floor, &wall1, &wall2,
                                                 &wall3, &wall4, &table, &coelho,
                                                 &chess_board, &bowl, &black_king, &black_queen,
-                                                &table2, &white_king, &white_queen, &sofa,
+                                                &table2, &white_king, &white_queen, &g_black_pawn,
+                                                &left_white_rook, &right_black_rook, &sofa,
                                                 &shelf, &tv, &chair1, &coelho1, &esfera1,
                                                 &esfera2, &bed, &book_shelf, &pack_book1,
                                                 &pack_book2, &drawer_left, &drawer_right};
@@ -1075,7 +1096,6 @@ int main(int argc, char* argv[])
                 glUniform1i(g_object_id_uniform, white_king.get_index());
                 DrawVirtualObject(white_king.get_model_name().c_str());
 
-
                 piece_to_reposition = &white_king;
 
                 glm::vec4 bowl_up = glm::vec4(0,1,0,0);
@@ -1102,7 +1122,6 @@ int main(int argc, char* argv[])
                 glUniform1i(g_object_id_uniform, black_king.get_index());
                 DrawVirtualObject(black_king.get_model_name().c_str());
 
-
                 piece_to_reposition = &black_king;
 
                 glm::vec4 bowl_up = glm::vec4(0,1,0,0);
@@ -1114,6 +1133,26 @@ int main(int argc, char* argv[])
                     TextRendering_Press_F_To_Collect(window);
                 }
 
+            } else if(interactable_object->get_name() == "chair" && hide[2]){
+                model = Matrix_Translate(interactable_object->get_bbox_center())
+                      * rotation_matrix
+                      * Matrix_Translate(-interactable_object->get_bbox_center())
+                      * left_white_bishop.get_model();
+
+                glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                glUniform1i(g_object_id_uniform, left_white_bishop.get_index());
+                DrawVirtualObject(left_white_bishop.get_model_name().c_str());
+
+                piece_to_reposition = &left_white_bishop;
+
+                glm::vec4 bowl_up = glm::vec4(0,-1,0,0);
+                glm::vec4 visible_v = ( rotation_matrix * bowl_up );
+                visible_v.w = 0.0f;
+
+                float inner_prod = dot(visible_v, -camera_view_vector);
+                if(inner_prod > 1.6 ){
+                    TextRendering_Press_F_To_Collect(window);
+                }
             }
         }
 
@@ -2021,6 +2060,22 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
                 collect_anim = true;
                 hide[1] = false;
             }
+        } else if(interactable_object->get_name() == "chair" && hide[2]){
+            //left white bishop
+            glm::vec4 bowl_up = glm::vec4(0,-1,0,0);
+            glm::vec4 visible_v = ( Matrix_Rotate_Z(g_AngleZ)
+                                   * Matrix_Rotate_Y(g_AngleY)
+                                   * Matrix_Rotate_X(g_AngleX)
+                                   * bowl_up
+                                   );
+            visible_v.w = 0.0f;
+
+            float inner_prod = dot(visible_v, -camera_view_vector);
+            if(inner_prod > 1.6 ){
+                is_inspecting = false;
+                collect_anim = true;
+                hide[2] = false;
+            }
         }
 
     }
@@ -2176,8 +2231,6 @@ void TextRendering_Press_E_To_Inspect(GLFWwindow* window)
     if ( !g_ShowInfoText )
         return;
 
-    float pad = TextRendering_LineHeight(window);
-
     char buffer[20];
     snprintf(buffer, 20, "Press E to inspect\n");
 
@@ -2188,8 +2241,6 @@ void TextRendering_Press_F_To_Collect(GLFWwindow* window)
 {
     if ( !g_ShowInfoText )
         return;
-
-    float pad = TextRendering_LineHeight(window);
 
     char buffer[20];
     snprintf(buffer, 20, "Press F to collect\n");
@@ -2626,7 +2677,9 @@ void drawer(float delta_t, SceneObject player, SceneObject& drawer_left, SceneOb
         if(drawer_left.get_position().z <= -5.6f &&
            !isBoundingBoxIntersection(player, new_pos) ){
             drawer_left.translate(0,0,new_z);
-            collectable1.translate(0,0,new_z + 3);
+            if(collectable1.get_position() != pieces_initial_position.at("black_king")[3]){
+                collectable1.translate(0,0,new_z + 3);
+            }
         }
     } else {
         float new_z = delta_t * 4;
@@ -2635,7 +2688,9 @@ void drawer(float delta_t, SceneObject player, SceneObject& drawer_left, SceneOb
         if(drawer_left.get_position().z >= -6.0f &&
            !isBoundingBoxIntersection(player, new_pos) ){
             drawer_left.translate(0,0,-new_z);
-            collectable1.translate(0,0,-(new_z + 3));
+            if(collectable1.get_position() != pieces_initial_position.at("black_king")[3]){
+                collectable1.translate(0,0,-(new_z + 3));
+            }
         }
     }
 

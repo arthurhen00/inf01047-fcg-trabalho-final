@@ -25,6 +25,29 @@ out vec4 position_model;
 out vec4 normal;
 out vec2 texcoords;
 out vec4 color_v;
+
+#define SPHERE      0
+#define BUNNY       1
+#define ROOM_FLOOR  2
+#define WALL_1      3
+#define SKYBOX      4
+#define WALL_1_SIDE 5
+#define TABLE       6
+#define CHESS       7
+#define BOWL        8
+#define WHITE_PIECE 9
+#define BLACK_PIECE 10
+#define CONSOLE_TABLE 11
+#define SOFA        12
+#define TV          13
+#define SHELF       14
+#define CHAIR       15
+#define BED         16
+#define BOOK_SHELF  17
+#define BOOKS       18
+#define ROOM_CEILING 19
+#define DRAWER      20
+
 void main()
 {
     // A variável gl_Position define a posição final de cada vértice
@@ -67,7 +90,6 @@ void main()
 
     texcoords = texture_coefficients;
 
-    #define BOWL  8
     if(object_id == BOWL){
         vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
         vec4 camera_position = inverse(view) * origin;
@@ -96,10 +118,10 @@ void main()
         V = texcoords.y;
 
         Kd = texture(TextureImage9, vec2(U,V)).rgb;
-        Ks= vec3(0.01,0.01,0.01);
+        Ks= vec3(0.04,0.04,0.04);
         Ka= Kd/8;
 
-        q = 32.0;
+        q = 16.0;
 
         // Espectro da luz ambiente
         vec3 Ia = vec3(0.2,0.2,0.2); // PREENCHA AQUI o espectro da luz ambiente

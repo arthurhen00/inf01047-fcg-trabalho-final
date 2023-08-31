@@ -99,16 +99,13 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(vec4(0.0f,5.0f,0.0f, 0.0f) - vec4(-1.0f,4.0f,0.0f, 0.0f));
-    vec4 l1 = normalize(vec4(0.0f,5.0f,0.0f, 0.0f) - vec4(1.0f,4.0f,0.0f, 0.0f));
-
+    vec4 l = normalize(vec4(5.0f, 3.0f, 5.0f, 0.0f) - vec4(4.0f, 2.0f, 4.5f, 0.0f)); // quina1    -> tabuleiro
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
 
     // Vetor que define o sentido da reflexão especular ideal.
     vec4 r = -l + 2 * n * dot(n, l); // PREENCHA AQUI o vetor de reflexão especular ideal
-    vec4 r1 = -l1 + 2 * n * dot(n, l1);
 
     vec4 h = normalize(v + l);
 
@@ -134,34 +131,40 @@ void main()
 
         U = (theta + M_PI) / (2 * M_PI);
         V = (phi + M_PI_2) / M_PI;
-        // PREENCHA AQUI
-        // Propriedades espectrais da esfera
+
         Kd = texture(TextureImage0, vec2(U,V)).rgb;
-        Ks = vec3(0.0,0.0,0.0);
+        Ks = vec3(0.01,0.01,0.01);
         Ka = Kd/2;
         q = 1.0;
+
     } else if ( object_id == BUNNY ){
-        float uR = 1;
-        float vR = 0.2;
+        float minx = bbox_min.x;
+        float maxx = bbox_max.x;
 
-        U = position_model.x * uR - floor(position_model.x * uR);
-        V = position_model.y * vR - floor(position_model.y * vR);
+        float miny = bbox_min.y;
+        float maxy = bbox_max.y;
 
-        Kd = texture(TextureImage0, vec2(U,V)).rgb;
-        Ks = vec3(0.8,0.8,0.8);
-        Ka = Kd/2;
+        float minz = bbox_min.z;
+        float maxz = bbox_max.z;
+
+        U = texcoords.x;
+        V = texcoords.y;
+
+        Kd = texture(TextureImage10, vec2(U,V)).rgb;
+        Ks = vec3(0.6,0.6,0.6);
+        Ka = Kd/4;
         q = 32.0;
     } else if ( object_id == ROOM_FLOOR ){
-        float uR = 2;
-        float vR = 1;
+        float uR = 3;
+        float vR = 2;
 
         U = position_model.x * uR - floor(position_model.x * uR);
         V = position_model.z * vR - floor(position_model.z * vR);
 
         Kd = texture(TextureImage3, vec2(U,V)).rgb * texture(TextureImage4, vec2(U,V)).rgb;
-        Ks = vec3(0.0,0.0,0.0);
+        Ks = vec3(0.1 ,0.1 ,0.1);
         Ka = Kd/2;
-        q = 20.0;
+        q = 32.0;
     } else if (object_id == WALL_1){
         float uR = 1.9;
         float vR = 1;
@@ -172,15 +175,15 @@ void main()
         Kd= texture(TextureImage5, vec2(U,V)).rgb * texture(TextureImage6, vec2(U,V)).rgb;
         Ks= vec3(0.0,0.0,0.0);
         Ka= Kd/2;
-        q = 2.0;
+        q = 1.0;
     } else if (object_id == TABLE){
         U = texcoords.x;
         V = texcoords.y;
 
         Kd= texture(TextureImage7, vec2(U,V)).rgb;
         Ks= vec3(0.04,0.04,0.04);
-        Ka= Kd/8;
-        q = 2.0;
+        Ka= Kd/6;
+        q = 32.0;
     } else if(object_id == CHESS){
         float uR = 0.11;
         float vR = 0.11;
@@ -191,88 +194,68 @@ void main()
         Kd= texture(TextureImage8, vec2(U,V)).rgb;
         Ks= vec3(0.1,0.1,0.1);
         Ka= Kd/8;
-        q = 2.0;
+        q = 16.0;
     } else if (object_id == WHITE_PIECE){
-        float minx = bbox_min.x;
-        float maxx = bbox_max.x;
-
-        float miny = bbox_min.y;
-        float maxy = bbox_max.y;
-
-        float minz = bbox_min.z;
-        float maxz = bbox_max.z;
-
-        U = (position_model.x - minx)/(maxx - minx);
-        V = (position_model.y - miny)/(maxy - miny);
+        U = texcoords.x;
+        V = texcoords.y;
 
         Kd = texture(TextureImage10, vec2(U,V)).rgb;
-        Ks = vec3(0.2,0.2,0.2);
-        Ka = Kd/2;
-        q = 1.0;
+        Ks = vec3(0.05,0.05,0.05);
+        Ka = Kd/4;
+        q = 16.0;
 
     } else if (object_id == BLACK_PIECE){
-        float minx = bbox_min.x;
-        float maxx = bbox_max.x;
-
-        float miny = bbox_min.y;
-        float maxy = bbox_max.y;
-
-        float minz = bbox_min.z;
-        float maxz = bbox_max.z;
-
-        U = (position_model.x - minx)/(maxx - minx);
-        V = (position_model.y - miny)/(maxy - miny);
+        U = texcoords.x;
+        V = texcoords.y;
 
         Kd = texture(TextureImage11, vec2(U,V)).rgb;
-        Ks = vec3(0.2,0.2,0.2);
-        Ka = Kd/2;
-        q = 1.0;
-
+        Ks = vec3(0.05,0.05,0.05);
+        Ka = Kd/4;
+        q = 16.0;
     }else if(object_id == CONSOLE_TABLE || object_id == DRAWER){
-
         U = texcoords.x;
         V = texcoords.y;
 
         Kd = texture(TextureImage12, vec2(U,V)).rgb;
         Ks = vec3(0.01,0.01,0.01);
-        Ka = Kd*2;
-        q = 1.0;
+        Ka = Kd/4;
+        q = 16.0;
     } else if(object_id == SOFA){
         U = texcoords.x;
         V = texcoords.y;
 
         Kd = texture(TextureImage13, vec2(U,V)).rgb * texture(TextureImage14, vec2(U,V)).rgb;
         Ks = vec3(0,0,0);
-        Ka = Kd/3;
+        Ka = Kd/2;
         q = 1.0f;
     } else if(object_id == TV){
         Kd = vec3(0.01f,0.01f,0.01f);
-        Ks = vec3(0.02f,0.02f,0.02f);
-        Ka = vec3(0,0,0);
-        q = 1.0;
+        Ks = vec3(0.2f,0.2f,0.2f);
+        Ka = Kd/8;
+        q = 32.0;
     } else if(object_id == SHELF){
         U = texcoords.x;
         V = texcoords.y;
 
         Kd = texture(TextureImage15, vec2(U,V)).rgb;
-        Ks = vec3(0.01f,0.01f,0.01f);
+        Ks = vec3(0.03f,0.03f,0.03f);
         Ka = Kd/6;
-        q = 1.0f;
+        q = 16.0f;
     } else if(object_id == CHAIR){
         U = texcoords.x;
         V = texcoords.y;
 
         Kd = texture(TextureImage17, vec2(U,V)).rgb;
         Ks = texture(TextureImage18, vec2(U,V)).rgb;
-        Ka = Kd/6;
-        q = 1.0f;
+        Ka = Kd/8;
+        q = 64.0f;
     } else if(object_id == BED){
         U = texcoords.x;
         V = texcoords.y;
 
         Kd = texture(TextureImage16, vec2(U,V)).rgb;
         Ks = vec3(0.0f,0.0f,0.0f);
-        Ka = Kd;
+        Ka = Kd/4;
         q = 1.0f;
     } else if(object_id == BOOK_SHELF){
         U = texcoords.x;
@@ -291,19 +274,19 @@ void main()
 
         Kd = texture(TextureImage20, vec2(U,V)).rgb;
         Ks = vec3(0.0f,0.0f,0.0f);
-        Ka = Kd/2;
+        Ka = Kd/4;
         q = 1.0f;
     }else if(object_id == ROOM_CEILING){
         float uR = 2;
-        float vR = 1.5;
+        float vR = 2;
 
         U = position_model.x * uR - floor(position_model.x * uR);
         V = position_model.z * vR - floor(position_model.z * vR);
 
         Kd = texture(TextureImage21, vec2(U,V)).rgb;
-        Ks = vec3(0.0f,0.0f,0.0f);
-        Ka = Kd/2;
-        q = 1.0f;
+        Ks = vec3(0.01f, 0.01f, 0.01f);
+        Ka = Kd/4;
+        q = 32.0f;
     } else {
         Kd = vec3(0.0,0.0,0.0);
         Ks = vec3(0.0,0.0,0.0);
@@ -311,48 +294,34 @@ void main()
         q = 1.0;
     }
 
-    // Espectro da fonte de iluminação
-    vec3 I = vec3(1.0,1.0,1.0); // PREENCH AQUI o espectro da fonte de luz
 
-    // Espectro da luz ambiente
-    vec3 Ia = vec3(0.2,0.2,0.2); // PREENCHA AQUI o espectro da luz ambiente
-
-    // Obtemos a refletância difusa a partir da leitura da imagem TextureImage0
-
-    // Termo difuso utilizando a lei dos cossenos de Lambert
-    vec3 lambert_diffuse_term = Kd * I * max(0, dot(n, l)); // PREENCHA AQUI o termo difuso de Lambert
-
-    // Termo ambiente
-    vec3 ambient_term = Ka * Ia; // PREENCHA AQUI o termo ambiente
-
-    // Termo especular utilizando o modelo de iluminação de Phong
-    vec3 phong_specular_term  = Ks * I * pow(max(0, dot(r, v)), q); // PREENCH AQUI o termo especular de Phong
+    vec3 I = vec3(1.0,1.0,1.0);
+    vec3 Ia = vec3(0.2,0.2,0.2);
+    vec3 lambert_diffuse_term = Kd * I * max(0, dot(n, l));
+    vec3 ambient_term = Ka * Ia;
+    vec3 phong_specular_term  = Ks * I * pow(max(0, dot(r, v)), q);
     vec3 bling_phong_specular_term  = Ks * I * pow(max(0, dot(n, h)), q);
 
-    // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
-    // necessário:
-    // 1) Habilitar a operação de "blending" de OpenGL logo antes de realizar o
-    //    desenho dos objetos transparentes, com os comandos abaixo no código C++:
-    //      glEnable(GL_BLEND);
-    //      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    // 2) Realizar o desenho de todos objetos transparentes *após* ter desenhado
-    //    todos os objetos opacos; e
-    // 3) Realizar o desenho de objetos transparentes ordenados de acordo com
-    //    suas distâncias para a câmera (desenhando primeiro objetos
-    //    transparentes que estão mais longe da câmera).
-    // Alpha default = 1 = 100% opaco = 0% transparente
+
     color.a = 1;
-
-    // Cor final do fragmento calculada com uma combinação dos termos difuso,
-    // especular, e ambiente. Veja slide 129 do documento Aula_17_e_18_Modelos_de_Iluminacao.pdf.
-
-    color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
+    //color.rgb = lambert_diffuse_term + ambient_term + bling_phong_specular_term;
 
     if(object_id == SKYBOX){
         color.rgb = vec3(0.1,0.1,0.1);
-    }
-    if(object_id == BOWL){
+    } else if(object_id == BOWL){
+        // Gouraud
         color = color_v;
+    } else if(object_id == ROOM_CEILING || object_id == WALL_1 || object_id == BOOKS ||
+              object_id == BED || object_id == SOFA){
+        // Difusa
+        color.rgb = lambert_diffuse_term + ambient_term;
+    } else if(object_id == ROOM_FLOOR || object_id == TV || object_id == SHELF ||
+              object_id == CHAIR || object_id == CHESS || object_id == TABLE ||
+              object_id == WHITE_PIECE || object_id == BLACK_PIECE || object_id == DRAWER ||
+              object_id == CONSOLE_TABLE || object_id == BOOK_SHELF || object_id == SPHERE ||
+              object_id == BUNNY){
+        // Blinn-Phong
+        color.rgb = lambert_diffuse_term + ambient_term + bling_phong_specular_term;
     }
 
 
