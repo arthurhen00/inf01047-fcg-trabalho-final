@@ -71,6 +71,7 @@ struct SceneObject
     glm::vec4    bbox_min; // Axis-Aligned Bounding Box do objeto
     glm::vec4    bbox_max;
     glm::mat4    model = Matrix_Identity();
+    float        radius = 0;
     int          index;
     bool         inspectable = true;
     bool         collision = true;
@@ -167,7 +168,7 @@ struct SceneObject
         return glm::max(bbox_min_global,bbox_max_global);
     }
 
-    glm::vec4 get_bbox_center(){
+    glm::vec4 get_center(){
         return model * glm::vec4(   (bbox_max.x + bbox_min.x)/2,
                                     (bbox_max.y + bbox_min.y)/2,
                                     (bbox_max.z + bbox_min.z)/2,
@@ -197,5 +198,15 @@ struct SceneObject
         model = model * Matrix_Rotate_X(x)
                       * Matrix_Rotate_Y(y)
                       * Matrix_Rotate_Z(z);
+    }
+
+    bool is_sphere(){
+        return radius != 0;
+    }
+    float get_radius(){
+        return radius;
+    }
+    void set_radius(float new_radius){
+        radius = new_radius;
     }
 };

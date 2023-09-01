@@ -196,7 +196,7 @@ bool fst_anim       = false;
 bool collect_anim   = false;
 bool open_left_drawer  = false;
 bool open_right_drawer = false;
-bool hide[6] = {true, true, true, true, true, true};
+bool hidden[6] = {true, true, true, true, true, true};
 
 glm::vec4 camera_view_vector;
 
@@ -774,6 +774,14 @@ int main(int argc, char* argv[])
     drawer_right.set_index(DRAWER);
     objects_to_draw.push_back(&drawer_right);
 
+    SceneObject beam_bag = g_VirtualScene.at("Cube_Cube.001_Material.002");
+    beam_bag.set_name("beam_bag");
+    beam_bag.mRotate(0,PI/1.5,0);
+    beam_bag.set_position(7.5f,-1.0f,5.5f);
+    beam_bag.set_index(DRAWER);
+    beam_bag.set_radius(1.0f);
+    objects_to_draw.push_back(&beam_bag);
+
     for(SceneObject* obj : objects_to_draw){
         if(obj->get_index() == WHITE_PIECE || obj->get_index() == BLACK_PIECE){
             pieces_initial_position.insert(std::make_pair(obj->get_name(),obj->get_model()));
@@ -828,6 +836,7 @@ int main(int argc, char* argv[])
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
+
         // Aqui executamos as operações de renderização
 
         // Definimos a cor do "fundo" do framebuffer como branco.  Tal cor é
@@ -870,9 +879,7 @@ int main(int argc, char* argv[])
         glm::vec3 direction_anim = glm::vec3(0,0,0);
 
         if(is_inspecting && interactable_object != NULL){
-            glm::vec4 bbox_center = interactable_object->get_bbox_center();
-            glm::vec4 vec = glm::normalize(glm::vec4(0.0f,0.0f,1.0f,0.0f)) * g_CameraDistance;
-            camera_position_c  = bbox_center + vec;
+            glm::vec4 bbox_center = interactable_object->get_center();
             camera_view_vector = bbox_center - camera_position_c;
         } else if(collect_anim){
             /* Animação de coleta */
@@ -938,7 +945,7 @@ int main(int argc, char* argv[])
             cameraZ = p_saida.z;
 
             camera_view_vector = glm::vec4(direction_anim.x, direction_anim.y, direction_anim.z, 1.0f)
-                               - player.get_bbox_center();
+                               - player.get_center();
 
             if(t_bezier <= 1.0f){
                 if(t_bezier < 0.2f){
@@ -1010,7 +1017,7 @@ int main(int argc, char* argv[])
                                                 &left_white_rook, &right_black_rook, &sofa,
                                                 &shelf, &tv, &chair1, &coelho1, &esfera1,
                                                 &esfera2, &bed, &book_shelf, &pack_book1,
-                                                &pack_book2, &drawer_left, &drawer_right};
+                                                &pack_book2, &drawer_left, &drawer_right, &beam_bag};
 
         move_with_collision(player, objects_group, delta_t, speed, w, u);
 
@@ -1074,9 +1081,9 @@ int main(int argc, char* argv[])
                                           * Matrix_Rotate_X(g_AngleX);
 
 
-            model = Matrix_Translate(interactable_object->get_bbox_center())
+            model = Matrix_Translate(interactable_object->get_center())
                       * rotation_matrix
-                      * Matrix_Translate(-interactable_object->get_bbox_center())
+                      * Matrix_Translate(-interactable_object->get_center())
                       * interactable_object->get_model();
 
 
@@ -1085,11 +1092,11 @@ int main(int argc, char* argv[])
             DrawVirtualObject(interactable_object->get_model_name().c_str());
 
             //---------------------------- OBJETOS SECUNDARIOS ----------------------------
-            if(interactable_object->get_name() == "bowl" && hide[0]){
+            if(interactable_object->get_name() == "bowl" && hidden[0]){
 
-                model = Matrix_Translate(interactable_object->get_bbox_center())
+                model = Matrix_Translate(interactable_object->get_center())
                       * rotation_matrix
-                      * Matrix_Translate(-interactable_object->get_bbox_center())
+                      * Matrix_Translate(-interactable_object->get_center())
                       * white_king.get_model();
 
                 glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -1111,11 +1118,11 @@ int main(int argc, char* argv[])
             } else if(interactable_object->get_index() == WHITE_PIECE || interactable_object->get_index() == BLACK_PIECE) {
                 TextRendering_Press_F_To_Collect(window);
                 piece_to_reposition = interactable_object;
-            } else if(interactable_object->get_name() == "drawer_left" && hide[1]){
+            } else if(interactable_object->get_name() == "drawer_left" && hidden[1]){
 
-                model = Matrix_Translate(interactable_object->get_bbox_center())
+                model = Matrix_Translate(interactable_object->get_center())
                       * rotation_matrix
-                      * Matrix_Translate(-interactable_object->get_bbox_center())
+                      * Matrix_Translate(-interactable_object->get_center())
                       * black_king.get_model();
 
                 glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -1133,10 +1140,10 @@ int main(int argc, char* argv[])
                     TextRendering_Press_F_To_Collect(window);
                 }
 
-            } else if(interactable_object->get_name() == "chair" && hide[2]){
-                model = Matrix_Translate(interactable_object->get_bbox_center())
+            } else if(interactable_object->get_name() == "chair" && hidden[2]){
+                model = Matrix_Translate(interactable_object->get_center())
                       * rotation_matrix
-                      * Matrix_Translate(-interactable_object->get_bbox_center())
+                      * Matrix_Translate(-interactable_object->get_center())
                       * left_white_bishop.get_model();
 
                 glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -1302,6 +1309,10 @@ void load_models(){
     ObjModel bookshelf_model("../../data/bookshelf/bookshelf-031.obj");
     ComputeNormals(&bookshelf_model);
     BuildTrianglesAndAddToVirtualScene(&bookshelf_model);
+
+    ObjModel beam_bag_model("../../data/beam bag.obj");
+    ComputeNormals(&beam_bag_model);
+    BuildTrianglesAndAddToVirtualScene(&beam_bag_model);
 }
 
 
@@ -1565,6 +1576,9 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
 
         size_t last_index = indices.size() - 1;
 
+
+
+
         SceneObject *theobject = new SceneObject (first_index,
                                                          last_index - first_index + 1,
                                                          GL_TRIANGLES,
@@ -1572,6 +1586,7 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
                                                          obj_index++,
                                                          bbox_min,
                                                          bbox_max);
+
 
 
         theobject->set_name(model->shapes[shape].name);
@@ -2024,7 +2039,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         old_camera_x = cameraX;
         old_camera_y = cameraY;
         old_camera_z = cameraZ;
-        if(interactable_object->get_name() == "bowl" && hide[0]){
+        if(interactable_object->get_name() == "bowl" && hidden[0]){
             //white king
             glm::vec4 bowl_up = glm::vec4(0,1,0,0);
             glm::vec4 visible_v = ( Matrix_Rotate_Z(g_AngleZ)
@@ -2038,13 +2053,13 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             if(inner_prod > 1.6 ){
                 is_inspecting = false;
                 collect_anim = true;
-                hide[0] = false;
+                hidden[0] = false;
             }
 
         } else if(interactable_object->get_index() == WHITE_PIECE || interactable_object->get_index() == BLACK_PIECE){
             is_inspecting = false;
             collect_anim = true;
-        } else if(interactable_object->get_name() == "drawer_left" && hide[1]){
+        } else if(interactable_object->get_name() == "drawer_left" && hidden[1]){
             //black king
             glm::vec4 bowl_up = glm::vec4(0,1,0,0);
             glm::vec4 visible_v = ( Matrix_Rotate_Z(g_AngleZ)
@@ -2058,9 +2073,9 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             if(inner_prod > 1.6 ){
                 is_inspecting = false;
                 collect_anim = true;
-                hide[1] = false;
+                hidden[1] = false;
             }
-        } else if(interactable_object->get_name() == "chair" && hide[2]){
+        } else if(interactable_object->get_name() == "chair" && hidden[2]){
             //left white bishop
             glm::vec4 bowl_up = glm::vec4(0,-1,0,0);
             glm::vec4 visible_v = ( Matrix_Rotate_Z(g_AngleZ)
@@ -2074,7 +2089,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             if(inner_prod > 1.6 ){
                 is_inspecting = false;
                 collect_anim = true;
-                hide[2] = false;
+                hidden[2] = false;
             }
         }
 
@@ -2574,58 +2589,123 @@ void move_with_collision(SceneObject player,
         if(obj.has_collision() && !fst_anim && !collect_anim){
             float nextX = cameraX;
             float nextZ = cameraZ;
-            SceneObject nextObjX = player;
-            SceneObject nextObjZ = player;
+            SceneObject player_dislocated_in_X = player;
+            SceneObject player_dislocated_in_Z = player;
             if (moving_forward){
                 movF = true;
                 nextX += -w.x * delta_t * speed;
                 nextZ += -w.z * delta_t * speed;
-                nextObjX.set_position(nextX,cameraY,cameraZ);
-                nextObjZ.set_position(cameraX,cameraY,nextZ);
-                if(isBoundingBoxIntersection(nextObjX, obj)){
+                player_dislocated_in_X.set_position(nextX,cameraY,cameraZ);
+                player_dislocated_in_Z.set_position(cameraX,cameraY,nextZ);
+
+                if(obj.is_sphere()){
+                    if(isCubeIntersectingSphere(player_dislocated_in_X.get_bbox_min(),
+                                                player_dislocated_in_X.get_bbox_max(),
+                                                obj.get_center(),
+                                                obj.get_radius())){
+                        colFX = true;
+                    }
+                    if(isCubeIntersectingSphere(player_dislocated_in_Z.get_bbox_min(),
+                                                player_dislocated_in_Z.get_bbox_max(),
+                                                obj.get_center(),
+                                                obj.get_radius())){
+                        colFZ = true;
+                    }
+                }else{
+                    if(isBoundingBoxIntersection(player_dislocated_in_X, obj)){
                     colFX = true;
+                    }
+                    if(isBoundingBoxIntersection(player_dislocated_in_Z, obj)){
+                        colFZ = true;
+                    }
                 }
-                if(isBoundingBoxIntersection(nextObjZ, obj)){
-                    colFZ = true;
-                }
+
+
             }
              if(moving_backwards){
                 movB = true;
                 nextX += w.x * delta_t * speed;
                 nextZ += w.z * delta_t * speed;
-                nextObjX.set_position(nextX,cameraY,cameraZ);
-                nextObjZ.set_position(cameraX,cameraY,nextZ);
-                if(isBoundingBoxIntersection(nextObjX, obj)){
-                    colBX = true;
-                }
-                if(isBoundingBoxIntersection(nextObjZ, obj)){
-                    colBZ = true;
+                player_dislocated_in_X.set_position(nextX,cameraY,cameraZ);
+                player_dislocated_in_Z.set_position(cameraX,cameraY,nextZ);
+
+                if(obj.is_sphere()){
+                    if(isCubeIntersectingSphere(player_dislocated_in_X.get_bbox_min(),
+                                                player_dislocated_in_X.get_bbox_max(),
+                                                obj.get_center(),
+                                                obj.get_radius())){
+                        colBX = true;
+                    }
+                    if(isCubeIntersectingSphere(player_dislocated_in_Z.get_bbox_min(),
+                                                player_dislocated_in_Z.get_bbox_max(),
+                                                obj.get_center(),
+                                                obj.get_radius())){
+                        colBZ = true;
+                    }
+                }else{
+                    if(isBoundingBoxIntersection(player_dislocated_in_X, obj)){
+                        colBX = true;
+                    }
+                    if(isBoundingBoxIntersection(player_dislocated_in_Z, obj)){
+                        colBZ = true;
+                    }
                 }
             }
             if(moving_right){
                 movR = true;
                 nextX += u.x * delta_t * speed;
                 nextZ += u.z * delta_t * speed;
-                nextObjX.set_position(nextX,cameraY,cameraZ);
-                nextObjZ.set_position(cameraX,cameraY,nextZ);
-                if(isBoundingBoxIntersection(nextObjX, obj)){
-                    colRX = true;
-                }
-                if(isBoundingBoxIntersection(nextObjZ, obj)){
-                    colRZ = true;
+                player_dislocated_in_X.set_position(nextX,cameraY,cameraZ);
+                player_dislocated_in_Z.set_position(cameraX,cameraY,nextZ);
+                if(obj.is_sphere()){
+                    if(isCubeIntersectingSphere(player_dislocated_in_X.get_bbox_min(),
+                                                player_dislocated_in_X.get_bbox_max(),
+                                                obj.get_center(),
+                                                obj.get_radius())){
+                        colRX = true;
+                    }
+                    if(isCubeIntersectingSphere(player_dislocated_in_Z.get_bbox_min(),
+                                                player_dislocated_in_Z.get_bbox_max(),
+                                                obj.get_center(),
+                                                obj.get_radius())){
+                        colRZ = true;
+                    }
+                }else{
+                    if(isBoundingBoxIntersection(player_dislocated_in_X, obj)){
+                        colRX = true;
+                    }
+                    if(isBoundingBoxIntersection(player_dislocated_in_Z, obj)){
+                        colRZ = true;
+                    }
                 }
             }
             if(moving_left){
                 movL = true;
                 nextX += -u.x * delta_t * speed;
                 nextZ += -u.z * delta_t * speed;
-                nextObjX.set_position(nextX,cameraY,cameraZ);
-                nextObjZ.set_position(cameraX,cameraY,nextZ);
-                if(isBoundingBoxIntersection(nextObjX, obj)){
-                    colLX = true;
-                }
-                if(isBoundingBoxIntersection(nextObjZ, obj)){
-                    colLZ = true;
+                player_dislocated_in_X.set_position(nextX,cameraY,cameraZ);
+                player_dislocated_in_Z.set_position(cameraX,cameraY,nextZ);
+
+                if(obj.is_sphere()){
+                    if(isCubeIntersectingSphere(player_dislocated_in_X.get_bbox_min(),
+                                                player_dislocated_in_X.get_bbox_max(),
+                                                obj.get_center(),
+                                                obj.get_radius())){
+                        colRX = true;
+                    }
+                    if(isCubeIntersectingSphere(player_dislocated_in_Z.get_bbox_min(),
+                                                player_dislocated_in_Z.get_bbox_max(),
+                                                obj.get_center(),
+                                                obj.get_radius())){
+                        colRZ = true;
+                    }
+                }else{
+                    if(isBoundingBoxIntersection(player_dislocated_in_X, obj)){
+                        colLX = true;
+                    }
+                    if(isBoundingBoxIntersection(player_dislocated_in_Z, obj)){
+                        colLZ = true;
+                    }
                 }
             }
         }

@@ -1,3 +1,5 @@
+#include <cmath>
+
 bool isBoundingBoxIntersection(SceneObject& ob1, SceneObject& ob2) {
 
     if(!ob2.has_collision()){
@@ -70,6 +72,30 @@ bool isRayBoudingBox(glm::vec4 ray, glm::vec4 ray_origin, SceneObject& obj1, flo
     intersection_distance = tmin;
 
     return true;
+}
+
+
+bool isCubeIntersectingSphere(glm::vec3 bbox_min, glm::vec3 bbox_max, glm::vec3 sphere_center, float radius)
+{
+    float radius2 = radius * radius;
+    float distance = 0;
+    if( sphere_center.x < bbox_min.x ) {
+        distance += std::pow( sphere_center.x - bbox_min.x ,2);
+    }else if( sphere_center.x > bbox_max.x ){
+        distance += std::pow( sphere_center.x - bbox_max.x ,2);
+    }
+    if( sphere_center.y < bbox_min.y ) {
+        distance += std::pow( sphere_center.y - bbox_min.y ,2);
+    }else if( sphere_center.y > bbox_max.y ){
+        distance += std::pow( sphere_center.y - bbox_max.y ,2);
+    }
+    if( sphere_center.z < bbox_min.z ) {
+        distance += std::pow( sphere_center.z - bbox_min.z ,2);
+    }else if( sphere_center.z > bbox_max.z ){
+        distance += std::pow( sphere_center.z - bbox_max.z ,2);
+    }
+
+    return distance <= radius2;
 }
 
 
