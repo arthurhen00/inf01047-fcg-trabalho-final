@@ -788,11 +788,19 @@ int main(int argc, char* argv[])
         }
     }
 
+    std::vector<SceneObject*> objects_group = {&room_floor, &wall1, &wall2,
+                                                &wall3, &wall4, &table, &coelho,
+                                                &chess_board, &bowl, &black_king, &black_queen,
+                                                &table2, &white_king, &white_queen, &g_black_pawn,
+                                                &left_white_rook, &right_black_rook, &sofa,
+                                                &shelf, &tv, &chair1, &coelho1, &esfera1,
+                                                &esfera2, &bed, &book_shelf, &pack_book1,
+                                                &pack_book2, &drawer_left, &drawer_right, &beam_bag};
+
     black_king.set_position(4.5f,piece_height+0.4,-6.0f);
     black_queen.set_position(-5.5f,piece_height,-3.3f);
     g_black_pawn.set_position(-0.8f, piece_height-0.3, 4.6f);
     g_black_pawn.mRotate(PI2,0,PI2);
-
     white_king.set_position(-6.0f,piece_height+0.1,-3.90f);
     white_king.mRotate(-PI2,0.0f,0.0f);
     white_queen.set_position(5.0f,piece_height-0.3f,-5.8f);
@@ -1007,41 +1015,17 @@ int main(int argc, char* argv[])
         float farplane  = -50.0f; // Posição do "far plane"
 
         /* Att posicao de camera */
+
+
+
         glm::vec4 w = -camera_view_vector_mov/norm(camera_view_vector_mov);
         glm::vec4 u = crossproduct(camera_up_vector, w)/norm(crossproduct(camera_up_vector, w)); /*camera_up_vector * w;*/
 
-        std::vector<SceneObject*> objects_group = {&room_floor, &wall1, &wall2,
-                                                &wall3, &wall4, &table, &coelho,
-                                                &chess_board, &bowl, &black_king, &black_queen,
-                                                &table2, &white_king, &white_queen, &g_black_pawn,
-                                                &left_white_rook, &right_black_rook, &sofa,
-                                                &shelf, &tv, &chair1, &coelho1, &esfera1,
-                                                &esfera2, &bed, &book_shelf, &pack_book1,
-                                                &pack_book2, &drawer_left, &drawer_right, &beam_bag};
-
         move_with_collision(player, objects_group, delta_t, speed, w, u);
 
-        if (g_UsePerspectiveProjection)
-        {
-            // Projeção Perspectiva.
-            // Para definição do field of view (FOV), veja slides 205-215 do documento Aula_09_Projecoes.pdf.
-            float field_of_view = 3.141592 / 3.0f;
-            projection = Matrix_Perspective(field_of_view, g_ScreenRatio, nearplane, farplane);
-        }
-        else
-        {
-            // Projeção Ortográfica.
-            // Para definição dos valores l, r, b, t ("left", "right", "bottom", "top"),
-            // PARA PROJEÇÃO ORTOGRÁFICA veja slides 219-224 do documento Aula_09_Projecoes.pdf.
-            // Para simular um "zoom" ortográfico, computamos o valor de "t"
-            // utilizando a variável g_CameraDistance.
-            float t = 1.5f*g_CameraDistance/2.5f;
-            float b = -t;
-            float r = t*g_ScreenRatio;
-            float l = -r;
-            projection = Matrix_Orthographic(l, r, b, t, nearplane, farplane);
-        }
 
+        float field_of_view = 3.141592 / 3.0f;
+        projection = Matrix_Perspective(field_of_view, g_ScreenRatio, nearplane, farplane);
 
         // Enviamos as matrizes "view" e "projection" para a placa de vídeo
         // (GPU). Veja o arquivo "shader_vertex.glsl", onde estas são
@@ -1091,8 +1075,12 @@ int main(int argc, char* argv[])
             glUniform1i(g_object_id_uniform, interactable_object->get_index());
             DrawVirtualObject(interactable_object->get_model_name().c_str());
 
+            if(interactable_object->get_index() == WHITE_PIECE || interactable_object->get_index() == BLACK_PIECE) {
+                TextRendering_Press_F_To_Collect(window);
+                piece_to_reposition = interactable_object;
+            } else if(interactable_object->get_name() == "bowl" && hidden[0]){
             //---------------------------- OBJETOS SECUNDARIOS ----------------------------
-            if(interactable_object->get_name() == "bowl" && hidden[0]){
+
 
                 model = Matrix_Translate(interactable_object->get_center())
                       * rotation_matrix
@@ -1115,9 +1103,6 @@ int main(int argc, char* argv[])
                 }
 
 
-            } else if(interactable_object->get_index() == WHITE_PIECE || interactable_object->get_index() == BLACK_PIECE) {
-                TextRendering_Press_F_To_Collect(window);
-                piece_to_reposition = interactable_object;
             } else if(interactable_object->get_name() == "drawer_left" && hidden[1]){
 
                 model = Matrix_Translate(interactable_object->get_center())
@@ -1161,6 +1146,8 @@ int main(int argc, char* argv[])
                     TextRendering_Press_F_To_Collect(window);
                 }
             }
+
+
         }
 
         if(!is_inspecting){
@@ -1412,27 +1399,6 @@ void LoadShadersFromFiles()
     glUseProgram(0);
 }
 
-
-
-// Função que pega a matriz M e guarda a mesma no topo da pilha
-void PushMatrix(glm::mat4 M)
-{
-    g_MatrixStack.push(M);
-}
-
-// Função que remove a matriz atualmente no topo da pilha e armazena a mesma na variável M
-void PopMatrix(glm::mat4& M)
-{
-    if ( g_MatrixStack.empty() )
-    {
-        M = Matrix_Identity();
-    }
-    else
-    {
-        M = g_MatrixStack.top();
-        g_MatrixStack.pop();
-    }
-}
 
 // Função que computa as normais de um ObjModel, caso elas não tenham sido
 // especificadas dentro do arquivo ".obj"
@@ -2691,13 +2657,13 @@ void move_with_collision(SceneObject player,
                                                 player_dislocated_in_X.get_bbox_max(),
                                                 obj.get_center(),
                                                 obj.get_radius())){
-                        colRX = true;
+                        colLX = true;
                     }
                     if(isCubeIntersectingSphere(player_dislocated_in_Z.get_bbox_min(),
                                                 player_dislocated_in_Z.get_bbox_max(),
                                                 obj.get_center(),
                                                 obj.get_radius())){
-                        colRZ = true;
+                        colLZ = true;
                     }
                 }else{
                     if(isBoundingBoxIntersection(player_dislocated_in_X, obj)){
