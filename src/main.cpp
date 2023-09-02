@@ -169,7 +169,7 @@ bool moving_right     = false;
 bool moving_up        = false;
 bool moving_down      = false;
 bool running        = false;
-bool fst_anim       = true;
+bool fst_anim       = false;
 bool collect_anim   = false;
 bool open_left_drawer  = false;
 bool open_right_drawer = false;
@@ -880,7 +880,7 @@ int main(int argc, char* argv[])
         glm::vec3 direction_anim = glm::vec3(0,0,0);
 
 
-
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
 
         if(is_inspecting && interactable_object != NULL){

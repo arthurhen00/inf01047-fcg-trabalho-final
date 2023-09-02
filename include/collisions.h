@@ -74,28 +74,43 @@ bool isRayBoudingBox(glm::vec4 ray, glm::vec4 ray_origin, SceneObject& obj1, flo
     return true;
 }
 
+glm::vec3 clamp_to_bbox(glm::vec3 bbox_min, glm::vec3 bbox_max, glm::vec3 sphere_center){
+    glm::vec3 closest_point_to_sphere = sphere_center;
+
+    if(closest_point_to_sphere.x < bbox_min.x){
+        closest_point_to_sphere.x = bbox_min.x;
+    }else if(closest_point_to_sphere.x > bbox_max.x){
+        closest_point_to_sphere.x = bbox_max.x;
+    }
+
+
+    if(closest_point_to_sphere.y < bbox_min.y){
+        closest_point_to_sphere.y = bbox_min.y;
+    }else if(closest_point_to_sphere.y > bbox_max.y){
+        closest_point_to_sphere.y = bbox_max.y;
+    }
+
+    if(closest_point_to_sphere.z < bbox_min.z){
+        closest_point_to_sphere.z = bbox_min.z;
+    }else if(closest_point_to_sphere.z > bbox_max.z){
+        closest_point_to_sphere.z = bbox_max.z;
+    }
+
+
+    return closest_point_to_sphere;
+
+}
+
 
 bool isCubeIntersectingSphere(glm::vec3 bbox_min, glm::vec3 bbox_max, glm::vec3 sphere_center, float radius)
 {
-    float radius2 = radius * radius;
-    float distance = 0;
-    if( sphere_center.x < bbox_min.x ) {
-        distance += std::pow( sphere_center.x - bbox_min.x ,2);
-    }else if( sphere_center.x > bbox_max.x ){
-        distance += std::pow( sphere_center.x - bbox_max.x ,2);
-    }
-    if( sphere_center.y < bbox_min.y ) {
-        distance += std::pow( sphere_center.y - bbox_min.y ,2);
-    }else if( sphere_center.y > bbox_max.y ){
-        distance += std::pow( sphere_center.y - bbox_max.y ,2);
-    }
-    if( sphere_center.z < bbox_min.z ) {
-        distance += std::pow( sphere_center.z - bbox_min.z ,2);
-    }else if( sphere_center.z > bbox_max.z ){
-        distance += std::pow( sphere_center.z - bbox_max.z ,2);
-    }
+    glm::vec3 closest_point_to_sphere = clamp_to_bbox(bbox_min, bbox_max, sphere_center);
 
-    return distance <= radius2;
+    float distance = glm::length(closest_point_to_sphere - sphere_center);
+
+    return distance <= radius;
 }
+
+
 
 

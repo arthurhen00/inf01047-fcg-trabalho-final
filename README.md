@@ -27,9 +27,14 @@
 Ambos integrantes adicionaram objetos, texturas, fizeram correção de bugs e refatorações. Além disso tiveram contribuições únicas:
 
 Arthur: movimentação e colisão cubo-cubo, animações inicial e de coleta, movimentação com curva de Bézier.
+![colisão cubo-cubo](./gifs/colisão.gif)
+
+![gaveta abrindo](./gifs/gaveta.gif)
 
 Gabriel: inspeção dos objetos (skybox, rotação, detecção orientação do objeto), colisão cubo-esfera, animação final.
+![colisão cubo-esfera](./gifs/colisao2.gif)
 
+![inspecao](./gifs/inspeção.gif)
 ## Controles
 
 W - move para frente. \
@@ -46,3 +51,8 @@ ESPAÇO - move para cima.\
 CTRL - move para baixo.
 
 OBS: os últimos dois controles só funcionam caso a variável y_axis_movement seja = true;
+
+## Como executar
+=== Windows
+===================================
+Para compilar e executar este projeto no Windows, utilize a IDE Code::Blocks e abra o arquivo Trabalho Final.cbp
