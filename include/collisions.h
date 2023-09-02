@@ -25,7 +25,7 @@ bool isBoundingBoxIntersection(SceneObject& ob1, SceneObject& ob2) {
 
     return yAxis && xAxis && zAxis;
 }
-// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection.html
+// FONTE: https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection.html
 bool isRayBoudingBox(glm::vec4 ray, glm::vec4 ray_origin, SceneObject& obj1, float& intersection_distance){
 
     glm::vec4 cur_bbox_max = obj1.get_bbox_max();
