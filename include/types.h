@@ -189,7 +189,7 @@ struct SceneObject
     }
 
     void translate(float x, float y, float z){
-        model = model * Matrix_Translate(x, y, z);
+        model =Matrix_Translate(x, y, z) * model ;
     }
     void scale(float x, float y, float z){
         model = model * Matrix_Scale(x, y, z);
