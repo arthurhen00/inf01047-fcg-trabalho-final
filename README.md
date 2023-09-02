@@ -53,6 +53,9 @@ CTRL - move para baixo.
 OBS: os últimos dois controles só funcionam caso a variável y_axis_movement seja = true;
 
 ## Como executar
+
 === Windows
-===================================
 Para compilar e executar este projeto no Windows, utilize a IDE Code::Blocks e abra o arquivo Trabalho Final.cbp
+
+## Objetivo
+O objetivo do jogo é coletar todas as peças de xadrez. Para tal inspecione elas e aperte f em seguida. Algumas peças estão escondidas, para encontrá-las é necessário inspecionar os outros objetos da cena.
