@@ -81,4 +81,4 @@ O objetivo do jogo é coletar todas as peças de xadrez. Para tal inspecione ela
 - [X] Movimentação com curva Bézier cúbica  
         Implementamos duas situações que a curva de bezier é aplicada, a primeira é a cutscene inicial, que se desloca por 6 pontos para apresentar o cenário ao usuário, a segunda é a animação de coleta de itens, onde a câmera se aproxima do tabuleiro de xadrez, através de 2 pontos.  
 - [X] Animações baseadas no tempo ($\Delta t$)  
-        Todas as mecânicas que movimentam algum objeto foram feitas beseado no delta t.
+        Todas as mecânicas que movimentam algum objeto foram feitas utilizando o delta t.
