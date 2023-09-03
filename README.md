@@ -60,7 +60,8 @@ Para compilar e executar este projeto no Windows, utilize a IDE Code::Blocks e a
 ## Objetivo
 O objetivo do jogo é coletar todas as peças de xadrez. Para tal inspecione elas e aperte f em seguida. Algumas peças estão escondidas, para encontrá-las é necessário inspecionar os outros objetos da cena.
 
-## Requisitos
+## Processo de desenvolvimento  
+O processo de desenvolvimento da nossa aplicação envolveu o Git como nossa ferramenta principal para versionar o código, o que nos permitiu acompanhar as alterações e trabalhar de forma colaborativa sem problemas. Inicialmente, discutimos e planejamos as tarefas, dividindo o trabalho de acordo com nossos interesses. Isso garantiu que ambos estivéssemos alinhados com as metas do projeto. Além disso, aproveitamos tanto o tempo livre quanto o tempo nos laboratórios para avançar no desenvolvimento, o que nos permitiu dedicar uma quantidade significativa de tempo ao projeto e alcançar nossos objetivos de maneira eficaz.  
 
 - [X] Malhas poligonais complexas  
         Boa parte dos objetos usados na cena são complexos, um exemplo são as peças de xadrez que possuem inúmeros vértices.  
