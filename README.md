@@ -59,3 +59,26 @@ Para compilar e executar este projeto no Windows, utilize a IDE Code::Blocks e a
 
 ## Objetivo
 O objetivo do jogo é coletar todas as peças de xadrez. Para tal inspecione elas e aperte f em seguida. Algumas peças estão escondidas, para encontrá-las é necessário inspecionar os outros objetos da cena.
+
+## Requisitos
+
+- [X] Malhas poligonais complexas  
+        Boa parte dos objetos usados na cena são complexos, um exemplo são as peças de xadrez que possuem inumeros vértices.  
+- [X] Transformações geométricas controladas pelo usuário  
+        Adicionamos a opção do usuário poder interagir com os objetos inspecionados, podendo rotacioná-los para ter uma visão do objeto em todos os ângulos, e com gavetas, podendo abri-las e fechá-las.  
+- [X] Câmera livre e câmera look-at  
+        Fizemos um jogo em primeira pessoa, entao a câmera principal é uma câmera livre. A câmera look-at foi implementada na cutscene inicial e na inspeção de objetos, onde toda vez que um obejeto é inspecionado, a camera de inspeção aponta para o centro do objeto.  
+- [X] Instâncias de objetos  
+        Modelamos o cenário com objetos instanciados de diversas complexidades.  
+- [X] Três tipos de testes de intersecção  
+        Utilizamos os seguintes testes de intersecção: Bounding box-Bounding box, Sphere-Bounding box para detectar as colisões durante a movimentação, Ray-Bounding box para detectar os objetos inspecionados.  
+- [X] Modelos de Iluminação Difusa e Blinn-Phong  
+        Aplicamos o modelo de iluminção difusa nos objetos que eram foscos e envelhecidos, como paredes de madeira, teto e livros, já o Blinn-Phong foi aplicado em objetos que poderiam apresentar uma reflexão, como mesas, piso, peças de porcelana e tv.  
+- [X] Modelos de Interpolação de Phong e Gouraud  
+        Utilizamos a interpolação de Phong na maioria dos objetos bara obter uma qualidade de iluminação maior, para fins de teste aplicamos a interpolação de Gouraud no "bowl" que fica na mesa principal.  
+- [X] Mapeamento de texturas em todos os objetos  
+        Objetos que foram esticados, como piso, paredes, tetos e tabuleiro de xadrez foram texturizados utilizando o metodo "repeat" para nao deformar a textura, os demais objetos foram mapeados diretos da textura.  
+- [X] Movimentação com curva Bézier cúbica  
+        Implementamos duas situações que a curva de bezier é aplicada, a primeira é a cutscene inicial, que se desloca por 6 pontos para apresentar o cenário ao usuario, a segunda é a animação de coleta de itens, onde a câmera se aproxima do tabuleiro de xadres, através de 2 pontos.  
+- [X] Animações baseadas no tempo ($\Delta t$)  
+        Todas as mecanicas que movimentam algum objeto foram feitas besado no delta t.
