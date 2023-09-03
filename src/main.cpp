@@ -169,7 +169,7 @@ bool moving_right     = false;
 bool moving_up        = false;
 bool moving_down      = false;
 bool running        = false;
-bool fst_anim       = false;
+bool fst_anim       = true;
 bool collect_anim   = false;
 bool open_left_drawer  = false;
 bool open_right_drawer = false;
@@ -177,6 +177,8 @@ bool hidden_pieces[6] = {true, true, true, true, true, true};
 bool all_pieces_collected = false;
 bool game_ended = false;
 bool y_axis_movement = false;
+float t_bezier = 0.0f;
+float t_bezier2 = 0.0f;
 
 glm::vec4 camera_view_vector;
 
@@ -825,8 +827,7 @@ int main(int argc, char* argv[])
     float prev_time = (float)glfwGetTime();
 
     float anim_speed = 2000;
-    float t_bezier = 0.0f;
-    float t_bezier2 = 0.0f;
+
     float t_bezier3 = 0.0f;
     float total_t = 0;
     float initial_t = 0;
@@ -878,10 +879,6 @@ int main(int argc, char* argv[])
         prev_time = current_time;
 
         glm::vec3 direction_anim = glm::vec3(0,0,0);
-
-
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-
 
         if(is_inspecting && interactable_object != NULL){
             glm::vec4 bbox_center = interactable_object->get_center();
@@ -1866,7 +1863,7 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
     // parâmetros que definem a posição da câmera dentro da cena virtual.
     // Assim, temos que o usuário consegue controlar a câmera.
 
-    if (g_LeftMouseButtonPressed)
+    //if (g_LeftMouseButtonPressed)
     {
         // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
         float dx = xpos - g_LastCursorPosX;
@@ -2033,6 +2030,20 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 
     }
 
+
+    if(action == GLFW_PRESS && key == GLFW_KEY_ENTER && !fst_anim){
+        t_bezier = 0.0f;
+        t_bezier2 = 0.0f;
+        fst_anim = true;
+    }
+
+    if(action == GLFW_PRESS && key == GLFW_KEY_C){
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+    if(action == GLFW_PRESS && key == GLFW_KEY_V){
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+
     /* coordenadas da camera: x, y, z*/
     /* W -> move para frente */
 
@@ -2162,9 +2173,6 @@ void TextRendering_Press_esc_to_close_game(GLFWwindow* window)
 
 void TextRendering_Press_F_To_Open(GLFWwindow* window)
 {
-
-    float pad = TextRendering_LineHeight(window);
-
     char buffer[22];
     snprintf(buffer, 22, "Press F to open/close\n");
 
@@ -2624,8 +2632,6 @@ void move_with_collision(SceneObject player,
             cameraY += -(u.y + 1) * delta_t * speed;
         }
     }
-
-
 }
 
 void drawer(float delta_t, SceneObject player, SceneObject& drawer_left, SceneObject& drawer_right,
@@ -2688,8 +2694,6 @@ void play_game_anim(float t){
     glm::vec3 look_at = glm::vec3(-3.8f, 0.1f, -3.9f);
     camera_view_vector = glm::vec4(look_at, 0) -
                                     glm::vec4(cameraX, cameraY, cameraZ, 0);
-
-    std::cout << glm::to_string(f_black_pawn->get_position()) << std::endl;
 
     if (t > 3 && t < 5){
         e_white_pawn->set_position(e_white_pawn->get_position() +
